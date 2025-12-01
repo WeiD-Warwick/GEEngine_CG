@@ -18,6 +18,10 @@ public:
     unsigned int maxDrawCalls;
     unsigned int offsetIndex;
 
+    std::vector<ConstantBuffer> vsConstantBuffers;
+    std::vector<ConstantBuffer> psConstantBuffers;
+
+
     // Variable Name : Variable Offset from start and size
     std::string name;
     std::map<std::string, ConstantBufferVariable> constantBufferData;
@@ -46,7 +50,37 @@ public:
         core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &cbDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
             IID_PPV_ARGS(&constantBuffer));
         constantBuffer->Map(0, NULL, (void**)&buffer);
+    }
 
+    void init(Core* core, unsigned int sizeInBytes, unsigned int _maxDrawCalls = 1024)
+    {
+        cbSizeInBytes = (sizeInBytes + 255) & ~255;
+        unsigned int cbSizeInBytesAligned = cbSizeInBytes * maxDrawCalls;
+        maxDrawCalls = _maxDrawCalls;
+        offsetIndex = 0;
+        HRESULT hr;
+        D3D12_HEAP_PROPERTIES heapprops = {};
+        heapprops.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapprops.CreationNodeMask = 1;
+        heapprops.VisibleNodeMask = 1;
+        D3D12_RESOURCE_DESC cbDesc = {};
+        cbDesc.Width = cbSizeInBytesAligned;
+        cbDesc.Height = 1;
+        cbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        cbDesc.DepthOrArraySize = 1;
+        cbDesc.MipLevels = 1;
+        cbDesc.SampleDesc.Count = 1;
+        cbDesc.SampleDesc.Quality = 0;
+        cbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &cbDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
+            IID_PPV_ARGS(&constantBuffer));
+        constantBuffer->Map(0, NULL, (void**)&buffer);
+    }
+
+
+    void update(void* data, unsigned int sizeInBytes, int frame)
+    {
+        memcpy(buffer + (frame * cbSizeInBytes), data, sizeInBytes);
     }
 
     void update(std::string name, void* data)
@@ -86,6 +120,4 @@ public:
             psConstantBuffers[i].next();
         }
     }
-
-
 };

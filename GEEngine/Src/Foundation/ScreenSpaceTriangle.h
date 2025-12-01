@@ -7,6 +7,7 @@
 #endif
 
 #include "Mesh.h"
+#include "Core.h"
 #include "CoreMath.h"
 #include <fstream>
 #include <sstream>
@@ -17,13 +18,14 @@
 #include "ConstantBuffer.h"
 #include "Timer.h"
 
-struct PRIM_VERTEX
-{
+struct PRIM_VERTEX {
+public:
     Vec3 position;
     Colour Colour;
 };
 
 struct alignas(16) ConstantBufferCPU {
+public:
     float time;
     float padding[3];
     Vec4 lights[4];
@@ -55,15 +57,50 @@ public:
         vertices[2].Colour = Colour(0, 0, 1.0f);
 
         unsigned int indices[3] = { 0, 1, 2 };
-
         m.init(core, &vertices[0], sizeof(PRIM_VERTEX), 3, indices, 3);
 
         // Compile shaders
-        std::string vsCode = ReadShader("Src/Shaders/VS.hlsl");
-        std::string psCode = ReadShader("Src/Shaders/PS.hlsl");
+        std::string vsCode = ReadShader("Src/Shaders/VS_Triangle.hlsl");
+        std::string psCode = ReadShader("Src/Shaders/PS_Triangle.hlsl");
 
         vertexShader = Compile(vsCode, "VS", "vs_5_0");
         pixelShader = Compile(psCode, "PS", "ps_5_0");
+
+        // PS Constant Buffer Reflection
+        ID3D12ShaderReflection* reflection = nullptr;
+        D3DReflect(
+            pixelShader->GetBufferPointer(),
+            pixelShader->GetBufferSize(),
+            IID_PPV_ARGS(&reflection));
+
+        D3D12_SHADER_DESC shaderDesc;
+        reflection->GetDesc(&shaderDesc);
+
+        // Iterate over constant buffers
+        for (UINT i = 0; i < shaderDesc.ConstantBuffers; i++) {
+            // Get details about i’th constant buffer
+            ConstantBuffer buffer;
+            ID3D12ShaderReflectionConstantBuffer* cb = reflection->GetConstantBufferByIndex(i);
+            D3D12_SHADER_BUFFER_DESC cbDesc;
+            cb->GetDesc(&cbDesc);
+            buffer.name = cbDesc.Name;
+            unsigned int totalSize = 0;
+
+            // Iterate over variables in constant buffer
+            for (int j = 0; j < cbDesc.Variables; j++) {
+                ID3D12ShaderReflectionVariable* var = cb->GetVariableByIndex(j);
+                D3D12_SHADER_VARIABLE_DESC vDesc;
+                var->GetDesc(&vDesc);
+                ConstantBufferVariable bufferVariable;
+                bufferVariable.offset = vDesc.StartOffset;
+                bufferVariable.size = vDesc.Size;
+                buffer.constantBufferData.insert({ vDesc.Name, bufferVariable });
+                totalSize += bufferVariable.size;
+            }
+            constantBuffer.cbSizeInBytes = totalSize;
+        }
+
+        reflection->Release();
 
         // Root Signature
         D3D12_ROOT_PARAMETER param = {};
@@ -105,17 +142,14 @@ public:
 
     }
 
-    std::string ReadShader(const std::string& filename)
-    {
+    std::string ReadShader(const std::string& filename) {
         std::ifstream file(filename);
         std::stringstream buffer;
         buffer << file.rdbuf();
-        std::cout << buffer.str() << std::endl;
         return buffer.str();
     }
 
-    ID3DBlob* Compile(const std::string& src, const char* entry, const char* profile)
-    {
+    ID3DBlob* Compile(const std::string& src, const char* entry, const char* profile) {
         assert(src.size() > 0);
         ID3DBlob* shader;
         ID3DBlob* status;
@@ -139,8 +173,7 @@ public:
         return shader;
     }
 
-    void draw(Core* core)
-    {
+    void draw(Core* core) {
         float dt = timer.dt();
         constBufferCPU.time += dt;
 

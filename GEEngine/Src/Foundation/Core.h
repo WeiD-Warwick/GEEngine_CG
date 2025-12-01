@@ -9,8 +9,7 @@
 #pragma comment(lib, "dxgi")
 #pragma comment(lib, "d3dcompiler.lib")
 
-class Core
-{
+class Core {
 public:
 	HWND _hwnd = nullptr;
 	int _width = 0;
