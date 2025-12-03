@@ -59,10 +59,10 @@
     <ClInclude Include="Src\Foundation\VertexLayoutCache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Foundation\Plane.h">
+    <ClInclude Include="Src\Foundation\ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Foundation\ShaderManager.h">
+    <ClInclude Include="Src\Foundation\Plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

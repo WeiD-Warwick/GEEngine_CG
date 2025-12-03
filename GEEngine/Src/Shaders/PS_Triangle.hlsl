@@ -1,4 +1,4 @@
-cbuffer bufferName
+cbuffer bufferName : register(b0)
 {
     float time;
     float2 lights[4];

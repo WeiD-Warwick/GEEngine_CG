@@ -1,44 +1,76 @@
 #pragma once
-#pragma once
-#include <d3d12.h>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include "ConstantBuffer.h"
+#include "Core.h"
+
+struct ShaderConstantBuffers
+{
+    std::map<std::string, ConstantBuffer*> vsCBs;
+    std::map<std::string, ConstantBuffer*> psCBs;
+};
 
 class ShaderManager
 {
 public:
-    struct ShaderRecord
-    {
-        ConstantBuffer vsCB;   // VS constant buffer
-        std::string cbName;    // staticMeshBuffer
-    };
+    std::map<std::string, ShaderConstantBuffers> shaders;
 
-    std::unordered_map<std::string, ShaderRecord> shaders;
-
-    void registerVSConstantBuffer(std::string shaderName, ConstantBuffer cb, std::string cbName)
-    {
-        ShaderRecord r;
-        r.vsCB = cb;
-        r.cbName = cbName;
-        shaders[shaderName] = r;
+    void addVSConstantBuffer(const std::string& shaderName,
+        const std::string& cbName,
+        ConstantBuffer* cb) {
+        shaders[shaderName].vsCBs[cbName] = cb;
     }
 
-    void updateConstantVS(
-        std::string shaderName,
-        std::string cbName,
-        std::string varName,
+    void addPSConstantBuffer(const std::string& shaderName,
+        const std::string& cbName,
+        ConstantBuffer* cb)
+    {
+        shaders[shaderName].psCBs[cbName] = cb;
+    }
+
+    void updateConstantVS(const std::string& shaderName,
+        const std::string& cbName,
+        const std::string& varName,
         void* data)
     {
-        ShaderRecord& rec = shaders[shaderName];
-        rec.vsCB.update(varName, data);
+        ConstantBuffer* cb = shaders[shaderName].vsCBs[cbName];
+        cb->update(varName, data);
     }
 
-    void bindVS(Core* core, std::string shaderName)
+    void updateConstantPS(const std::string& shaderName,
+        const std::string& cbName,
+        const std::string& varName,
+        void* data)
     {
-        ShaderRecord& rec = shaders[shaderName];
-        core->getCommandList()->SetGraphicsRootConstantBufferView(
-            0, rec.vsCB.getGPUAddress());
-        rec.vsCB.next();
+        ConstantBuffer* cb = shaders[shaderName].psCBs[cbName];
+        cb->update(varName, data);
+    }
+
+    void applyVS(Core* core, const std::string& shaderName)
+    {
+        int slot = 0;
+        for (auto& it : shaders[shaderName].vsCBs)
+        {
+            ConstantBuffer* cb = it.second;
+            core->getCommandList()->SetGraphicsRootConstantBufferView(
+                slot, cb->getGPUAddress(core->frameIndex())
+            );
+            cb->next();
+            slot++;
+        }
+    }
+
+    void applyPS(Core* core, const std::string& shaderName)
+    {
+        int slot = 0;
+        for (auto& it : shaders[shaderName].psCBs)
+        {
+            ConstantBuffer* cb = it.second;
+            core->getCommandList()->SetGraphicsRootConstantBufferView(
+                slot, cb->getGPUAddress(core->frameIndex())
+            );
+            cb->next();
+            slot++;
+        }
     }
 };

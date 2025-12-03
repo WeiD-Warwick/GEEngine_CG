@@ -66,6 +66,7 @@ public:
         vertexShader = Compile(vsCode, "VS", "vs_5_0");
         pixelShader = Compile(psCode, "PS", "ps_5_0");
 
+        /*
         // PS Constant Buffer Reflection
         ID3D12ShaderReflection* reflection = nullptr;
         D3DReflect(
@@ -101,7 +102,7 @@ public:
         }
 
         reflection->Release();
-
+        */
         // Root Signature
         D3D12_ROOT_PARAMETER param = {};
         param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
@@ -188,15 +189,14 @@ public:
             constBufferCPU.lights[i] = Vec4(x, y, 0.0f, 0.0f);
         }
 
+        core->beginRenderPass();
+
         int frame = core->frameIndex();
 
         constantBuffer.update(&constBufferCPU, sizeof(ConstantBufferCPU), frame);
 
-        core->beginRenderPass();
-
         // Root Signature
-        core->getCommandList()->SetGraphicsRootConstantBufferView(
-            0, constantBuffer.getGPUAddress(frame));
+        core->getCommandList()->SetGraphicsRootConstantBufferView(1, constantBuffer.getGPUAddress(frame));
 
         psos.bind(core, "Triangle");
         m.draw(core);

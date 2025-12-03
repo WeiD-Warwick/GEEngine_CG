@@ -6,199 +6,157 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#include <vector>
-#include "VertexLayoutCache.h"
 #include "Mesh.h"
+#include "Core.h"
 #include "CoreMath.h"
 #include <fstream>
 #include <sstream>
-#include <string>
 #include "PSOManager.h"
+#include <iostream>
+#include "Layout.h"
 #include "ConstantBuffer.h"
 #include "Timer.h"
-#include "Layout.h"
 #include "ShaderManager.h"
 
 class Plane {
-    Mesh mesh;
+	Mesh mesh;
 
     ID3DBlob* vertexShader = nullptr;
     ID3DBlob* pixelShader = nullptr;
+
     PSOManager psos;
 
-    ShaderManager shaderMgr;
+    ShaderManager shaders;
 
-    ConstantBuffer psConstantBuffer;
-    ConstantBufferCPU psCB_CPU{};
+    ConstantBuffer* vsCB = nullptr;
+    ConstantBuffer* psCB = nullptr;
 
     Timer timer;
 
+    float totalTime = 0;
+
 public:
-    ~Plane() {}
+	Plane(Core* core) {
+		std::vector<STATIC_VERTEX> vertices;
+		vertices.push_back(addVertex(Vec3(-15, 0, -15), Vec3(0, 1, 0), 0, 0));
+		vertices.push_back(addVertex(Vec3(15, 0, -15), Vec3(0, 1, 0), 1, 0));
+		vertices.push_back(addVertex(Vec3(-15, 0, 15), Vec3(0, 1, 0), 0, 1));
+		vertices.push_back(addVertex(Vec3(15, 0, 15), Vec3(0, 1, 0), 1, 1));
+		std::vector<unsigned int> indices;
+		indices.push_back(2); indices.push_back(1); indices.push_back(0);
+		indices.push_back(1); indices.push_back(2); indices.push_back(3);
+		mesh.init(core, vertices, indices);
 
-    Plane(Core* core)
-    {
+		// Compile shaders
+		std::string vsCode = ReadShader("Src/Shaders/VS.hlsl");
+		std::string psCode = ReadShader("Src/Shaders/PS.hlsl");
 
-        // Create Vertex and index
-        std::vector<STATIC_VERTEX> vertices;
-        vertices.push_back(addVertex(Vec3(-15, 0, -15), Vec3(0, 1, 0), 0, 0));
-        vertices.push_back(addVertex(Vec3(15, 0, -15), Vec3(0, 1, 0), 1, 0));
-        vertices.push_back(addVertex(Vec3(-15, 0, 15), Vec3(0, 1, 0), 0, 1));
-        vertices.push_back(addVertex(Vec3(15, 0, 15), Vec3(0, 1, 0), 1, 1));
+		vertexShader = Compile(vsCode, "VS", "vs_5_0");
+		pixelShader = Compile(psCode, "PS", "ps_5_0");
 
-        std::vector<unsigned int> indices;
-        indices.push_back(2); indices.push_back(1); indices.push_back(0);
-        indices.push_back(1); indices.push_back(2); indices.push_back(3);
+        // Reflection
+        vsCB = new ConstantBuffer();
+        vsCB->init(core, 256);
+        vsCB->buildFromReflection(vertexShader);
+        shaders.addVSConstantBuffer("StaticModel", "staticMeshBuffer", vsCB);
+        psCB = new ConstantBuffer();
+        psCB->init(core, 256);
+        psCB->buildFromReflection(pixelShader);
+        shaders.addVSConstantBuffer("StaticModel", "staticMeshBuffer", psCB);
 
-        mesh.init(core, vertices, indices);
+        // Root Signature
+        D3D12_ROOT_PARAMETER param = {};
+        param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+        param.Descriptor.ShaderRegister = 0;
+        param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-        // Compile Shader
-        std::string vsCode = ReadShader("Src/Shaders/VS.hlsl");
-        std::string psCode = ReadShader("Src/Shaders/PS.hlsl");
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        desc.NumParameters = 1;
+        desc.pParameters = &param;
 
-        vertexShader = Compile(vsCode, "VS", "vs_5_0");
-        pixelShader = Compile(psCode, "PS", "ps_5_0");
+        ID3DBlob* serialized = nullptr;
+        ID3DBlob* error = nullptr;
+        D3D12SerializeRootSignature(
+            &desc,
+            D3D_ROOT_SIGNATURE_VERSION_1,
+            &serialized, &error);
 
-        // reflection
-        ID3D12ShaderReflection* vsRefl = nullptr;
-        D3DReflect(
-            vertexShader->GetBufferPointer(),
-            vertexShader->GetBufferSize(),
-            IID_PPV_ARGS(&vsRefl));
+        core->device->CreateRootSignature(
+            0,
+            serialized->GetBufferPointer(),
+            serialized->GetBufferSize(),
+            IID_PPV_ARGS(&core->rootSignature));
 
-        D3D12_SHADER_DESC vsDesc;
-        vsRefl->GetDesc(&vsDesc);
+        serialized->Release();
 
-        ConstantBuffer vsCB;
+        psos.createPSO(core, "Plane", vertexShader, pixelShader, VertexLayoutCache::getStaticLayout());
+	}
 
-        for (UINT i = 0; i < vsDesc.ConstantBuffers; i++)
-        {
-            ID3D12ShaderReflectionConstantBuffer* cb = vsRefl->GetConstantBufferByIndex(i);
-            D3D12_SHADER_BUFFER_DESC cbDesc;
-            cb->GetDesc(&cbDesc);
-
-            vsCB.name = cbDesc.Name;
-            unsigned int totalSize = 0;
-
-            for (UINT j = 0; j < cbDesc.Variables; j++)
-            {
-                ID3D12ShaderReflectionVariable* var = cb->GetVariableByIndex(j);
-                D3D12_SHADER_VARIABLE_DESC vDesc;
-                var->GetDesc(&vDesc);
-
-                ConstantBufferVariable varInfo;
-                varInfo.offset = vDesc.StartOffset;
-                varInfo.size = vDesc.Size;
-
-                vsCB.constantBufferData.insert({ vDesc.Name, varInfo });
-                totalSize += varInfo.size;
-            }
-
-            vsCB.cbSizeInBytes = totalSize;
-        }
-
-        vsRefl->Release();
-
-        vsCB.init(core, vsCB.cbSizeInBytes, 2);
-
-        // ShaderManager register
-        shaderMgr.registerVSConstantBuffer("StaticModel", vsCB, "staticMeshBuffer");
-
-        // PS Constant Buffer
-        psCB_CPU.time = 0;
-        psConstantBuffer.init(core, sizeof(ConstantBufferCPU), 2);
-
-
-        // PSO
-        psos.createPSO(core, "StaticModel",
-            vertexShader, pixelShader,
-            VertexLayoutCache::getStaticLayout());
-    }
-
-    std::string ReadShader(const std::string& filename)
-    {
+    std::string ReadShader(const std::string& filename) {
         std::ifstream file(filename);
         std::stringstream buffer;
         buffer << file.rdbuf();
         return buffer.str();
     }
 
-    ID3DBlob* Compile(const std::string& src, const char* entry, const char* profile)
-    {
+    ID3DBlob* Compile(const std::string& src, const char* entry, const char* profile) {
+        assert(src.size() > 0);
         ID3DBlob* shader;
-        ID3DBlob* error;
+        ID3DBlob* status;
 
         HRESULT hr = D3DCompile(
             src.c_str(), strlen(src.c_str()),
             NULL, NULL, NULL,
             entry, profile,
             0, 0,
-            &shader, &error);
+            &shader, &status
+        );
 
         if (FAILED(hr))
         {
-            OutputDebugStringA((char*)error->GetBufferPointer());
-            error->Release();
+            OutputDebugStringA((char*)status->GetBufferPointer());
+            status->Release();
             return nullptr;
         }
 
-        if (error) error->Release();
+        if (status) status->Release();
         return shader;
     }
 
+    void update(const Matrix& W, const Matrix& VP)
+    {
+        shaders.updateConstantVS("StaticModel", "staticMeshBuffer", "W", (void*)&W);
+        shaders.updateConstantVS("StaticModel", "staticMeshBuffer", "VP", (void*)&VP);
+    }
+
+
     void draw(Core* core)
     {
-        float dt = timer.dt();
-        psCB_CPU.time += dt;
+        float t = timer.dt();
+        totalTime += t;
+        Vec3 from = Vec3(11 * cosf(totalTime), 5, 11 * sinf(totalTime));
 
-        // Light
-        int WIDTH = core->_width;
-        int HEIGHT = core->_height;
+        Matrix view = Matrix::LookAt(from, Vec3(0, 1, 0), Vec3(0, 1, 0));
 
-        for (int i = 0; i < 4; i++) {
-            float angle = psCB_CPU.time + (i * float(M_PI) / 2.0f);
-            float x = WIDTH / 2.0f + cosf(angle) * WIDTH * 0.3f;
-            float y = HEIGHT / 2.0f + sinf(angle) * HEIGHT * 0.3f;
-            psCB_CPU.lights[i] = Vec4(x, y, 0, 0);
-        }
+        float fov = M_PI / 4.0f;
+        float aspect = 1024 / float(1024);
+        Matrix proj = Matrix::Perspective(fov, aspect, 0.1f, 1000.0f);
 
+        Matrix VP = (proj * view).transpose();
+        Matrix W = Matrix::Identity().transpose();
 
-        // Implement camera
-        Matrix W = Matrix::Identity();
+        update(W, VP);
 
-        Matrix view = Matrix::LookAt(
-            Vec3(11 * cos(psCB_CPU.time), 5, 11 * sin(psCB_CPU.time)),
-            Vec3(0, 0, 0),
-            Vec3(0, 1, 0));
+        core->getCommandList()->SetGraphicsRootSignature(core->rootSignature);
 
-        Matrix proj = Matrix::Perspective(
-            60.0f * M_PI / 180.0f,
-            float(WIDTH) / float(HEIGHT),
-            0.1f, 100.0f);
+        shaders.applyVS(core, "StaticModel");
+        shaders.applyPS(core, "StaticModel");
 
-        Matrix VP = proj * view;
-
-
-        // VS Update
-        shaderMgr.updateConstantVS("StaticModel", "staticMeshBuffer", "W", &W);
-        shaderMgr.updateConstantVS("StaticModel", "staticMeshBuffer", "VP", &VP);
-
-
-        // PS constant buffer
-        int frame = core->frameIndex();
-        psConstantBuffer.update(&psCB_CPU, sizeof(ConstantBufferCPU), frame);
-
-
-        // Render
-        core->beginRenderPass();
-
-        shaderMgr.bindVS(core, "StaticModel");
-
-        core->getCommandList()->SetGraphicsRootConstantBufferView(
-            1, psConstantBuffer.getGPUAddress(frame));
-
-        psos.bind(core, "StaticModel");
+        psos.bind(core, "Plane");
 
         mesh.draw(core);
     }
+
+
 };

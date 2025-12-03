@@ -5,7 +5,6 @@
 // Vertex Definition
 // ===================
 
-
 struct STATIC_VERTEX {
 	Vec3 pos;
 	Vec3 normal;

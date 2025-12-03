@@ -1,14 +1,3 @@
-cbuffer bufferName
-{
-    float time;
-    float2 lights[4];
-};
-
-float dist(float2 screenspace_pos, float2 light)
-{
-    return (length(screenspace_pos - light) / (50.0 * abs(cos(time))));
-}
-
 struct PS_INPUT
 {
     float4 Pos : SV_POSITION;
@@ -19,5 +8,6 @@ struct PS_INPUT
 
 float4 PS(PS_INPUT input) : SV_Target0
 {
-    return float4(abs(normalize(input.Normal)) * 0.9f, 1.0);
+    float3 n = normalize(input.Normal);
+    return float4(abs(n) * 0.9f, 1.0f);
 }

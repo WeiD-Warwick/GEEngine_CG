@@ -112,8 +112,10 @@ public:
 
         adapter = adapters[bestIndex];
 
-        // Create Command Queues
+        // create Device
         D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&device));
+
+        // Create Command Queues
         D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc = {};
         graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         device->CreateCommandQueue(&graphicsQueueDesc, IID_PPV_ARGS(&graphicsQueue));
@@ -245,14 +247,14 @@ public:
 
         D3D12_ROOT_PARAMETER rootParameterCBVS = {};
         rootParameterCBVS.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParameterCBVS.Descriptor.ShaderRegister = 0;
+        rootParameterCBVS.Descriptor.ShaderRegister = 0; // Register(b0)
         rootParameterCBVS.Descriptor.RegisterSpace = 0;
         rootParameterCBVS.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
         parameters.push_back(rootParameterCBVS);
 
         D3D12_ROOT_PARAMETER rootParameterCBPS = {};
         rootParameterCBPS.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        rootParameterCBPS.Descriptor.ShaderRegister = 0;
+        rootParameterCBPS.Descriptor.ShaderRegister = 0; // Register(b0)
         rootParameterCBPS.Descriptor.RegisterSpace = 0;
         rootParameterCBPS.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         parameters.push_back(rootParameterCBPS);

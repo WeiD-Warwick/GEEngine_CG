@@ -1,123 +1,133 @@
 #pragma once
 #include <d3d12.h>
-#include "Core.h"
+#include <d3d12shader.h>
+#include <d3dcompiler.h>
 #include <map>
+#include <string>
+#include <vector>
+#include "Core.h"
+#pragma comment(lib, "d3d12.lib")
 
-struct ConstantBufferVariable
-{
+
+struct ConstantBufferVariable {
     unsigned int offset;
     unsigned int size;
 };
 
 class ConstantBuffer {
-
 public:
-    ID3D12Resource* constantBuffer;
-    unsigned char* buffer;
-    unsigned int cbSizeInBytes;
-    unsigned int maxDrawCalls;
-    unsigned int offsetIndex;
+    ID3D12Resource* constantBuffer = nullptr;
+    unsigned char* buffer = nullptr;
+    unsigned int cbSizeInBytes = 0;
+    unsigned int maxDrawCalls = 0;
+    unsigned int offsetIndex = 0;
 
-    std::vector<ConstantBuffer> vsConstantBuffers;
-    std::vector<ConstantBuffer> psConstantBuffers;
-
-
-    // Variable Name : Variable Offset from start and size
     std::string name;
     std::map<std::string, ConstantBufferVariable> constantBufferData;
 
-
-    void init(Core* core, unsigned int sizeInBytes, int frames)
-    {
-        cbSizeInBytes = (sizeInBytes + 255) & ~255;  // 256 ??
-
-        HRESULT hr;
-        D3D12_HEAP_PROPERTIES heapprops = {};
-        heapprops.Type = D3D12_HEAP_TYPE_UPLOAD;
-        heapprops.CreationNodeMask = 1;
-        heapprops.VisibleNodeMask = 1;
-
-        D3D12_RESOURCE_DESC cbDesc = {};
-        cbDesc.Width = cbSizeInBytes * frames;
-        cbDesc.Height = 1;
-        cbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        cbDesc.DepthOrArraySize = 1;
-        cbDesc.MipLevels = 1;
-        cbDesc.SampleDesc.Count = 1;
-        cbDesc.SampleDesc.Quality = 0;
-        cbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-
-        core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &cbDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
-            IID_PPV_ARGS(&constantBuffer));
-        constantBuffer->Map(0, NULL, (void**)&buffer);
-    }
-
-    void init(Core* core, unsigned int sizeInBytes, unsigned int _maxDrawCalls = 1024)
-    {
+    void init(Core *core, unsigned int sizeInBytes, unsigned int _maxDrawCalls = 1024) {
         cbSizeInBytes = (sizeInBytes + 255) & ~255;
-        unsigned int cbSizeInBytesAligned = cbSizeInBytes * maxDrawCalls;
         maxDrawCalls = _maxDrawCalls;
         offsetIndex = 0;
-        HRESULT hr;
+
+        unsigned int totalSize = cbSizeInBytes * maxDrawCalls;
+
         D3D12_HEAP_PROPERTIES heapprops = {};
         heapprops.Type = D3D12_HEAP_TYPE_UPLOAD;
+        heapprops.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        heapprops.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
         heapprops.CreationNodeMask = 1;
         heapprops.VisibleNodeMask = 1;
+
         D3D12_RESOURCE_DESC cbDesc = {};
-        cbDesc.Width = cbSizeInBytesAligned;
-        cbDesc.Height = 1;
         cbDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        cbDesc.Width = totalSize;
+        cbDesc.Height = 1;
         cbDesc.DepthOrArraySize = 1;
         cbDesc.MipLevels = 1;
         cbDesc.SampleDesc.Count = 1;
-        cbDesc.SampleDesc.Quality = 0;
         cbDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        core->device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &cbDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
-            IID_PPV_ARGS(&constantBuffer));
-        constantBuffer->Map(0, NULL, (void**)&buffer);
-    }
 
+        core->device->CreateCommittedResource(
+            &heapprops,
+            D3D12_HEAP_FLAG_NONE,
+            &cbDesc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            IID_PPV_ARGS(&constantBuffer)
+        );
+
+        constantBuffer->Map(0, nullptr, (void**)&buffer);
+    }
 
     void update(void* data, unsigned int sizeInBytes, int frame)
     {
         memcpy(buffer + (frame * cbSizeInBytes), data, sizeInBytes);
     }
 
-    void update(std::string name, void* data)
-    {
+    void update(const std::string& name, void* data) {
         ConstantBufferVariable cbVariable = constantBufferData[name];
         unsigned int offset = offsetIndex * cbSizeInBytes;
         memcpy(&buffer[offset + cbVariable.offset], data, cbVariable.size);
     }
 
-    D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress() const
+    D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress(int frame)
     {
-        return (constantBuffer->GetGPUVirtualAddress() + (offsetIndex * cbSizeInBytes));
+        return (constantBuffer->GetGPUVirtualAddress() + (frame * cbSizeInBytes));
     }
 
-    D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress(int frame) const
-    {
-        return constantBuffer->GetGPUVirtualAddress() + (frame * cbSizeInBytes);
+    D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress() const {
+        return constantBuffer->GetGPUVirtualAddress() + (offsetIndex * cbSizeInBytes);
     }
 
     void next() {
         offsetIndex++;
-        if (offsetIndex >= maxDrawCalls)
-        {
-            offsetIndex = 0;
-        }
+        if (offsetIndex >= maxDrawCalls) offsetIndex = 0;
     }
 
-    void apply(Core* core) {
-        for (int i = 0; i < vsConstantBuffers.size(); i++)
+    void resetFrame() {
+        offsetIndex = 0;
+    }
+
+    void buildFromReflection(ID3DBlob* shaderBlob)
+    {
+        ID3D12ShaderReflection* reflection;
+        D3DReflect(
+            shaderBlob->GetBufferPointer(), 
+            shaderBlob->GetBufferSize(), 
+            IID_PPV_ARGS(&reflection));
+        D3D12_SHADER_DESC desc;
+        reflection->GetDesc(&desc);
+
+        for (UINT i = 0; i < desc.ConstantBuffers; i++)
         {
-            core->getCommandList()->SetGraphicsRootConstantBufferView(i, vsConstantBuffers[i].getGPUAddress());
-            vsConstantBuffers[i].next();
+            ConstantBuffer buffer;
+            ID3D12ShaderReflectionConstantBuffer* constantBuffer = reflection->GetConstantBufferByIndex(i);
+            D3D12_SHADER_BUFFER_DESC cbDesc;
+            constantBuffer->GetDesc(&cbDesc);
+            buffer.name = cbDesc.Name;
+            unsigned int totalSize = 0;
+
+            for (int j = 0; j < cbDesc.Variables; j++) {
+                ID3D12ShaderReflectionVariable* var = constantBuffer->GetVariableByIndex(j);
+                D3D12_SHADER_VARIABLE_DESC vDesc;
+                var->GetDesc(&vDesc);
+                ConstantBufferVariable bufferVariable;
+                bufferVariable.offset = vDesc.StartOffset;
+                bufferVariable.size = vDesc.Size;
+                buffer.constantBufferData.insert({ vDesc.Name, bufferVariable });
+                totalSize += bufferVariable.size;
+            }
         }
-        for (int i = 0; i < psConstantBuffers.size(); i++)
-        {
-            core->getCommandList()->SetGraphicsRootConstantBufferView(i, psConstantBuffers[i].getGPUAddress());
-            psConstantBuffers[i].next();
+
+        reflection->Release();
+    }
+
+    ~ConstantBuffer() {
+        if (constantBuffer) {
+            constantBuffer->Unmap(0, nullptr);
+            constantBuffer->Release();
+            constantBuffer = nullptr;
         }
     }
 };

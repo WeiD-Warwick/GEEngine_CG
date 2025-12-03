@@ -72,7 +72,7 @@ public:
 
 		// Create Pipeline State Object
 		ID3D12PipelineState* pso;
-		HRESULT hr = core->device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso));
+		core->device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pso));
 		psos.insert({ name, pso });
 
 	}
