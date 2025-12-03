@@ -134,7 +134,6 @@
     <ClInclude Include="Src\Foundation\Core.h" />
     <ClInclude Include="Src\Foundation\CoreMath.h" />
     <ClInclude Include="Src\Foundation\GPUFence.h" />
-    <ClInclude Include="Src\Foundation\Layout.h" />
     <ClInclude Include="Src\Foundation\Mesh.h" />
     <ClInclude Include="Src\Foundation\Plane.h" />
     <ClInclude Include="Src\Foundation\PSOManager.h" />

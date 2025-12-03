@@ -13,7 +13,6 @@
 #include <sstream>
 #include "PSOManager.h"
 #include <iostream>
-#include "Layout.h"
 #include "ConstantBuffer.h"
 #include "Timer.h"
 #include "ShaderManager.h"
@@ -28,8 +27,8 @@ class Plane {
 
     ShaderManager shaders;
 
-    ConstantBuffer* vsCB = nullptr;
-    ConstantBuffer* psCB = nullptr;
+    ConstantBuffer constantBuffer;
+    ConstantBufferVariable vsCB;
 
     Timer timer;
 
@@ -48,47 +47,15 @@ public:
 		mesh.init(core, vertices, indices);
 
 		// Compile shaders
-		std::string vsCode = ReadShader("Src/Shaders/VS.hlsl");
-		std::string psCode = ReadShader("Src/Shaders/PS.hlsl");
-
-		vertexShader = Compile(vsCode, "VS", "vs_5_0");
-		pixelShader = Compile(psCode, "PS", "ps_5_0");
+        vertexShader = ShaderManager::loadAndCompile("Src/Shaders/VS.hlsl", "VS", "vs_5_0");
+        pixelShader = ShaderManager::loadAndCompile("Src/Shaders/PS.hlsl", "PS", "ps_5_0");
 
         // Reflection
-        vsCB = new ConstantBuffer();
-        vsCB->init(core, 256);
-        vsCB->buildFromReflection(vertexShader);
-        shaders.addVSConstantBuffer("StaticModel", "staticMeshBuffer", vsCB);
-        psCB = new ConstantBuffer();
-        psCB->init(core, 256);
-        psCB->buildFromReflection(pixelShader);
-        shaders.addVSConstantBuffer("StaticModel", "staticMeshBuffer", psCB);
+        unsigned int cbSize = constantBuffer.buildFromReflection(vertexShader);
 
-        // Root Signature
-        D3D12_ROOT_PARAMETER param = {};
-        param.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-        param.Descriptor.ShaderRegister = 0;
-        param.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+        constantBuffer.init(core, cbSize);
 
-        D3D12_ROOT_SIGNATURE_DESC desc = {};
-        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-        desc.NumParameters = 1;
-        desc.pParameters = &param;
-
-        ID3DBlob* serialized = nullptr;
-        ID3DBlob* error = nullptr;
-        D3D12SerializeRootSignature(
-            &desc,
-            D3D_ROOT_SIGNATURE_VERSION_1,
-            &serialized, &error);
-
-        core->device->CreateRootSignature(
-            0,
-            serialized->GetBufferPointer(),
-            serialized->GetBufferSize(),
-            IID_PPV_ARGS(&core->rootSignature));
-
-        serialized->Release();
+        shaders.addConstantBufferVS("StaticModel", "staticMeshBuffer", &constantBuffer);
 
         psos.createPSO(core, "Plane", vertexShader, pixelShader, VertexLayoutCache::getStaticLayout());
 	}
@@ -124,10 +91,10 @@ public:
         return shader;
     }
 
-    void update(const Matrix& W, const Matrix& VP)
+    void update(Core* core, const Matrix& W, const Matrix& VP)
     {
-        shaders.updateConstantVS("StaticModel", "staticMeshBuffer", "W", (void*)&W);
-        shaders.updateConstantVS("StaticModel", "staticMeshBuffer", "VP", (void*)&VP);
+        shaders.updateConstantVS(core, "StaticModel", "staticMeshBuffer", "W", &W);
+        shaders.updateConstantVS(core, "StaticModel", "staticMeshBuffer", "VP", &VP);
     }
 
 
@@ -143,20 +110,15 @@ public:
         float aspect = 1024 / float(1024);
         Matrix proj = Matrix::Perspective(fov, aspect, 0.1f, 1000.0f);
 
-        Matrix VP = (proj * view).transpose();
-        Matrix W = Matrix::Identity().transpose();
+        const Matrix VP = proj * view;
+        const Matrix W = Matrix::Identity();
 
-        update(W, VP);
+        update(core, W, VP);
 
-        core->getCommandList()->SetGraphicsRootSignature(core->rootSignature);
-
-        shaders.applyVS(core, "StaticModel");
-        shaders.applyPS(core, "StaticModel");
+        core->beginRenderPass();
+        constantBuffer.update(&vsCB, sizeof(ConstantBufferCPU), core->frameIndex());
 
         psos.bind(core, "Plane");
-
         mesh.draw(core);
     }
-
-
 };

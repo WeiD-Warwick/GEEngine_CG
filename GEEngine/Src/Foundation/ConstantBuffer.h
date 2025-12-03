@@ -65,11 +65,13 @@ public:
         memcpy(buffer + (frame * cbSizeInBytes), data, sizeInBytes);
     }
 
-    void update(const std::string& name, void* data) {
-        ConstantBufferVariable cbVariable = constantBufferData[name];
-        unsigned int offset = offsetIndex * cbSizeInBytes;
-        memcpy(&buffer[offset + cbVariable.offset], data, cbVariable.size);
+    void update(const std::string& name, const void* data, int frame)
+    {
+        ConstantBufferVariable cbVar = constantBufferData[name];
+        unsigned int base = frame * cbSizeInBytes;
+        memcpy(buffer + base + cbVar.offset, data, cbVar.size);
     }
+
 
     D3D12_GPU_VIRTUAL_ADDRESS getGPUAddress(int frame)
     {
@@ -89,24 +91,31 @@ public:
         offsetIndex = 0;
     }
 
-    void buildFromReflection(ID3DBlob* shaderBlob)
+    ~ConstantBuffer() {
+        if (constantBuffer) {
+            constantBuffer->Unmap(0, nullptr);
+            constantBuffer->Release();
+            constantBuffer = nullptr;
+        }
+    }
+
+    unsigned int buildFromReflection(ID3DBlob* shaderBlob)
     {
         ID3D12ShaderReflection* reflection;
         D3DReflect(
-            shaderBlob->GetBufferPointer(), 
-            shaderBlob->GetBufferSize(), 
+            shaderBlob->GetBufferPointer(),
+            shaderBlob->GetBufferSize(),
             IID_PPV_ARGS(&reflection));
         D3D12_SHADER_DESC desc;
         reflection->GetDesc(&desc);
+        unsigned int totalSize = 0;
 
-        for (UINT i = 0; i < desc.ConstantBuffers; i++)
-        {
-            ConstantBuffer buffer;
+        for (UINT i = 0; i < desc.ConstantBuffers; i++) {
+            ConstantBuffer cBuffer;
             ID3D12ShaderReflectionConstantBuffer* constantBuffer = reflection->GetConstantBufferByIndex(i);
             D3D12_SHADER_BUFFER_DESC cbDesc;
             constantBuffer->GetDesc(&cbDesc);
-            buffer.name = cbDesc.Name;
-            unsigned int totalSize = 0;
+            cBuffer.name = cbDesc.Name;
 
             for (int j = 0; j < cbDesc.Variables; j++) {
                 ID3D12ShaderReflectionVariable* var = constantBuffer->GetVariableByIndex(j);
@@ -115,19 +124,12 @@ public:
                 ConstantBufferVariable bufferVariable;
                 bufferVariable.offset = vDesc.StartOffset;
                 bufferVariable.size = vDesc.Size;
-                buffer.constantBufferData.insert({ vDesc.Name, bufferVariable });
+                cBuffer.constantBufferData.insert({ vDesc.Name, bufferVariable });
                 totalSize += bufferVariable.size;
             }
         }
-
         reflection->Release();
-    }
 
-    ~ConstantBuffer() {
-        if (constantBuffer) {
-            constantBuffer->Unmap(0, nullptr);
-            constantBuffer->Release();
-            constantBuffer = nullptr;
-        }
+        return totalSize;
     }
 };

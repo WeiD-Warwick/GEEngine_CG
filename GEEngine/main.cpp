@@ -22,7 +22,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         //tri.draw(&core);
         plane.draw(&core);
 
-
         if (win.keys[VK_ESCAPE]) break;
 
         core.finishFrame();

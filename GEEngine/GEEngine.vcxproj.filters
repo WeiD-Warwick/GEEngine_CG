@@ -44,9 +44,6 @@
     <ClInclude Include="Src\Foundation\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Foundation\Layout.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Src\Foundation\ScreenSpaceTriangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
