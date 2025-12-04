@@ -26,13 +26,11 @@ public:
     unsigned int numInstances;
     unsigned int offsetIndex = 0;
 
-    void init(Core *core, unsigned int sizeInBytes, unsigned int maxDrawCalls = 1024)
-    {
+    void init(Core *core, unsigned int sizeInBytes, unsigned int maxDrawCalls = 1024) {
         cbSizeInBytes = (sizeInBytes + 255) & ~255;
         unsigned int cbSizeInBytesAligned = cbSizeInBytes * maxDrawCalls;
         numInstances = maxDrawCalls;
         offsetIndex = 0;
-        HRESULT hr;
         D3D12_HEAP_PROPERTIES heapprops;
         memset(&heapprops, 0, sizeof(D3D12_HEAP_PROPERTIES));
         heapprops.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -58,8 +56,7 @@ public:
         constantBuffer->Map(0, &readRange, (void**)&buffer);
     }
 
-    void update(std::string& name, void* data)
-    {
+    void update(std::string& name, void* data) {
         ConstantBufferVariable cbVariable = constantBufferData[name];
         unsigned int offset = offsetIndex * cbSizeInBytes;
         memcpy(&buffer[offset + cbVariable.offset], data, cbVariable.size);

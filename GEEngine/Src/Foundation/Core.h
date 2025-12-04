@@ -432,8 +432,7 @@ public:
         resetCommandList();
 
         // Issue copy command
-        if (texFootprint != NULL)
-        {
+        if (texFootprint != NULL) {
             D3D12_TEXTURE_COPY_LOCATION src = {};
             src.pResource = uploadBuffer;
             src.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
@@ -443,9 +442,8 @@ public:
             dst.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
             dst.SubresourceIndex = 0;
             getCommandList()->CopyTextureRegion(&dst, 0, 0, 0, &src, NULL);
-        }
-        else
-        {
+        } else {
+            if (!uploadBuffer) return;
             getCommandList()->CopyBufferRegion(dstResource, 0, uploadBuffer, 0, size);
         }
 
