@@ -140,6 +140,8 @@
     <ClInclude Include="Src\Foundation\ShaderManager.h" />
     <ClInclude Include="Src\Foundation\Window.h" />
     <ClInclude Include="Src\Polygon\Sphere.h" />
+    <ClInclude Include="Src\Polygon\Tree.h" />
+    <ClInclude Include="Third_Party\GEMLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Src\Shaders\PS.hlsl">
@@ -172,6 +174,18 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Src\Assets\Models\acacia_003.gem" />
+    <None Include="Src\Assets\Models\TRex.gem" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_alb.png" />
+    <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_nh.png" />
+    <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_rmax.png" />
+    <Image Include="Src\Assets\Models\Textures\Textures1_ALB.png" />
+    <Image Include="Src\Assets\Models\Textures\Textures1_NH.png" />
+    <Image Include="Src\Assets\Models\Textures\Textures1_RMAX.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
