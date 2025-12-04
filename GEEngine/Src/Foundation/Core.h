@@ -35,9 +35,6 @@ public:
 
 class Core {
 public:
-	HWND _hwnd = nullptr;
-	int _width = 0;
-	int _height = 0;
 
 	// Adapter
 	IDXGIAdapter1* adapter = nullptr;
@@ -99,7 +96,7 @@ public:
     }
 
 
-    Core(HWND hwnd, int width, int height) : _hwnd(hwnd), _width(width), _height(height) {
+    void init(HWND hwnd, int width, int height) {
         // Debug
         ID3D12Debug1* debug;
         D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
@@ -152,8 +149,8 @@ public:
 
         DXGI_SWAP_CHAIN_DESC1 scDesc = {};
         scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        scDesc.Width = _width;
-        scDesc.Height = _height;
+        scDesc.Width = width;
+        scDesc.Height = height;
         scDesc.SampleDesc.Count = 1; // MSAA here
         scDesc.SampleDesc.Quality = 0;
         scDesc.BufferCount = 2;
@@ -162,7 +159,7 @@ public:
 
         // Create the swapchain
         IDXGISwapChain1* swapChain1;
-        factory->CreateSwapChainForHwnd(graphicsQueue, _hwnd, &scDesc, NULL, NULL, &swapChain1);
+        factory->CreateSwapChainForHwnd(graphicsQueue, hwnd, &scDesc, NULL, NULL, &swapChain1);
         swapChain1->QueryInterface(&swapchain);
         swapChain1->Release();
         factory->Release();

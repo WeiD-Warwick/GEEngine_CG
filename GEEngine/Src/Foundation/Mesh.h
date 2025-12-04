@@ -73,4 +73,14 @@ public:
         core->getCommandList()->IASetIndexBuffer(&ibView);
         core->getCommandList()->DrawIndexedInstanced(numMeshIndices, 1, 0, 0, 0);
     }
+
+    void cleanUp()
+    {
+        indexBuffer->Release();
+        vertexBuffer->Release();
+    }
+    ~Mesh()
+    {
+        cleanUp();
+    }
 };

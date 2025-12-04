@@ -122,7 +122,6 @@ private:
     }
 
     ID3DBlob* compile(const std::string& src, const char* entry, const char* profile) {
-        assert(src.size() > 0);
         ID3DBlob* shader;
         ID3DBlob* status;
 

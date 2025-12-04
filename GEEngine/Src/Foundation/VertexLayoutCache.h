@@ -1,9 +1,6 @@
 #pragma once
 #include "CoreMath.h"
 #include <d3d12.h>
-// ===================
-// Vertex Definition
-// ===================
 
 struct STATIC_VERTEX {
 	Vec3 pos;
@@ -18,7 +15,7 @@ STATIC_VERTEX addVertex(Vec3 p, Vec3 n, float tu, float tv)
 	STATIC_VERTEX v;
 	v.pos = p;
 	v.normal = n;
-	v.tangent = Vec3(0, 0, 0); // For now
+	v.tangent = Vec3(0, 0, 0);
 	v.tu = tu;
 	v.tv = tv;
 	return v;
@@ -30,7 +27,7 @@ class VertexLayoutCache {
 public:
 	static const D3D12_INPUT_LAYOUT_DESC& getStaticLayout() {
 		static const D3D12_INPUT_ELEMENT_DESC inputLayoutStatic[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
 		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
 		D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
