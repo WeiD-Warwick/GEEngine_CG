@@ -139,6 +139,7 @@
     <ClInclude Include="Src\Polygon\ScreenSpaceTriangle.h" />
     <ClInclude Include="Src\Foundation\ShaderManager.h" />
     <ClInclude Include="Src\Foundation\Window.h" />
+    <ClInclude Include="Src\Polygon\Sphere.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Src\Shaders\PS.hlsl">

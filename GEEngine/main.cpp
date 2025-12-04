@@ -8,6 +8,7 @@
 #include "Src/Polygon/Plane.h"
 #include "Src/Polygon/ScreenSpaceTriangle.h"
 #include "Src/Polygon/Cube.h"
+#include "Src/Polygon/Sphere.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
@@ -29,7 +30,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	plane.init(&core, &psoManager, &shaderManager);
 	Cube cube;
 	cube.init(&core, &psoManager, &shaderManager);
-	int option = 3;
+	Sphere sphere;
+	sphere.init(&core, &psoManager, &shaderManager, 100, 100, 10);
+	int option = 4;
 	// render
 	while (true) {
 		core.beginFrame();
@@ -52,6 +55,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		case 3: {
 			core.beginRenderPass();
 			cube.draw(&core, &psoManager, &shaderManager, t);
+			break;
+		}
+		case 4: {
+			core.beginRenderPass();
+			sphere.draw(&core, &psoManager, &shaderManager, t);
 			break;
 		}
 		default:
