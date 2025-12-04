@@ -23,6 +23,7 @@ struct PS_INPUT
 PS_INPUT VS(VS_INPUT input)
 {
     PS_INPUT output;
+
     output.Pos = mul(input.Pos, W);
     output.Pos = mul(output.Pos, VP);
     output.Normal = mul(input.Normal, W);

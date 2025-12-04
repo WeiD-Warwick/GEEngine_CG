@@ -36,10 +36,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		t += dt;
 		Matrix vp;
-		Matrix p = Matrix::perspective(0.01f, 10000.0f, 1024.0f / 1024.0f, 60.0f);
+		Matrix p = Matrix::perspectiveLH(0.01f, 10000.0f, 1024.0f / 1024.0f, 60.0f);
 		Vec3 from = Vec3(11 * cos(t), 5, 11 * sinf(t));
-		Matrix v = Matrix::lookAt(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
-		vp = (v * p).transpose();
+		Matrix v = Matrix::lookAtLH(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
+		vp = (p * v);
 
 		shaderManager.updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
 		

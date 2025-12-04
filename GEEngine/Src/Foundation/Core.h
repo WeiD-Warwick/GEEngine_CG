@@ -90,6 +90,11 @@ public:
     // rootSignature
     ID3D12RootSignature* rootSignature = nullptr;
 
+    unsigned int srvTableIndex;
+    int width;
+    int height;
+    HWND windowHandle;
+
     // Release D3D12 Resource
     ~Core() {
         flushGraphicsQueue();
@@ -109,7 +114,7 @@ public:
     }
 
 
-    void init(HWND hwnd, int width, int height) {
+    void init(HWND hwnd, int _width, int _height) {
         // Debug
         ID3D12Debug1* debug;
         D3D12GetDebugInterface(IID_PPV_ARGS(&debug));
@@ -149,6 +154,10 @@ public:
         // create Device
         D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&device));
 
+        for (auto& adapter : adapters) {
+            adapter->Release();
+        }
+
         // Create Command Queues
         D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc = {};
         graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -160,44 +169,79 @@ public:
         computeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
         device->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&computeQueue));
 
-        DXGI_SWAP_CHAIN_DESC1 scDesc = {};
+        createRootSignature();
+
+        // Create Swapchain
+        DXGI_SWAP_CHAIN_DESC1 scDesc;
+        memset(&scDesc, 0, sizeof(DXGI_SWAP_CHAIN_DESC1));
         scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
         scDesc.Width = width;
         scDesc.Height = height;
         scDesc.SampleDesc.Count = 1; // MSAA here
         scDesc.SampleDesc.Quality = 0;
         scDesc.BufferCount = 2;
-        scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
-        // Create the swapchain
         IDXGISwapChain1* swapChain1;
-        factory->CreateSwapChainForHwnd(graphicsQueue, hwnd, &scDesc, NULL, NULL, &swapChain1);
+        factory->CreateSwapChainForHwnd(graphicsQueue, hwnd, &scDesc, nullptr, nullptr, &swapChain1);
         swapChain1->QueryInterface(&swapchain);
         swapChain1->Release();
+
         factory->Release();
 
-        // Create Command Allocators and Command Lists
-        device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(&graphicsCommandAllocator[0]));
-        device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE,
-            IID_PPV_ARGS(&graphicsCommandList[0]));
-        device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(&graphicsCommandAllocator[1]));
-        device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE,
-            IID_PPV_ARGS(&graphicsCommandList[1]));
-
-        // Create Heap in init
-        D3D12_DESCRIPTOR_HEAP_DESC renderTargetViewHeapDesc = {};
+        D3D12_DESCRIPTOR_HEAP_DESC renderTargetViewHeapDesc;
+        D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle;
+        memset(&renderTargetViewHeapDesc, 0, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
         renderTargetViewHeapDesc.NumDescriptors = scDesc.BufferCount;
         renderTargetViewHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+        renderTargetViewHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
         device->CreateDescriptorHeap(&renderTargetViewHeapDesc, IID_PPV_ARGS(&backbufferHeap));
-
-        // Allocate memory for Backbuffer array
+        renderTargetViewHandle = backbufferHeap->GetCPUDescriptorHandleForHeapStart();
         backbuffers = new ID3D12Resource * [scDesc.BufferCount];
+        backbuffers[0] = NULL;
+        backbuffers[1] = NULL;
 
-        // Get backbuffers and create views on heap
-        D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle = backbufferHeap->GetCPUDescriptorHandleForHeapStart();
+        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
+        memset(&dsvHeapDesc, 0, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
+        dsvHeapDesc.NumDescriptors = 1;
+        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+        device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsvHeap));
+        dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
+        dsv = NULL;
+
+        width = _width;
+        height = _height;
+        updateScreenResources(_width, _height);
+
+        device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&graphicsCommandAllocator[0]));
+        device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&graphicsCommandList[0]));
+        device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&graphicsCommandAllocator[1]));
+        device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&graphicsCommandList[1]));
+
+        graphicsQueueFence[0].create(device);
+        graphicsQueueFence[1].create(device);
+
+        createRootSignature();
+
+        windowHandle = hwnd;
+    }
+    void updateScreenResources(int _width, int _height)
+    {
+        for (unsigned int i = 0; i < 2; i++) {
+            if (backbuffers[i] != NULL) {
+                backbuffers[i]->Release();
+            }
+        }
+        if (_width != width || _height != height) {
+            swapchain->ResizeBuffers(0, _width, _height, DXGI_FORMAT_UNKNOWN, 0);
+        }
+        DXGI_SWAP_CHAIN_DESC desc;
+        swapchain->GetDesc(&desc);
+        width = desc.BufferDesc.Width;
+        height = desc.BufferDesc.Height;
+
+        D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle;
+        renderTargetViewHandle = backbufferHeap->GetCPUDescriptorHandleForHeapStart();
         unsigned int renderTargetViewDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         for (unsigned int i = 0; i < 2; i++)
         {
@@ -206,24 +250,21 @@ public:
             renderTargetViewHandle.ptr += renderTargetViewDescriptorSize;
         }
 
-        // Create fences
-        graphicsQueueFence[0].create(device);
-        graphicsQueueFence[1].create(device);
+        viewport.TopLeftX = 0.0f;
+        viewport.TopLeftY = 0.0f;
+        viewport.Width = (float)width;
+        viewport.Height = (float)height;
+        viewport.MinDepth = 0.0f;
+        viewport.MaxDepth = 1.0f;
 
-        // ============================
-        // Create Depth Buffer
-        // ============================
+        scissorRect.left = 0;
+        scissorRect.top = 0;
+        scissorRect.right = width;
+        scissorRect.bottom = height;
 
-        // Create Descriptor Heap
-        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-        memset(&dsvHeapDesc, 0, sizeof(D3D12_DESCRIPTOR_HEAP_DESC));
-        dsvHeapDesc.NumDescriptors = 1;
-        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsvHeap));
-        dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-        // Fill in structs
+        if (dsv != NULL) {
+            dsv->Release();
+        }
         D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
         depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
         depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -232,15 +273,13 @@ public:
         depthClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         depthClearValue.DepthStencil.Depth = 1.0f;
         depthClearValue.DepthStencil.Stencil = 0;
-
-        // Want fast on chip memory
-        D3D12_HEAP_PROPERTIES heapprops = {};
+        D3D12_HEAP_PROPERTIES heapprops;
+        memset(&heapprops, 0, sizeof(D3D12_HEAP_PROPERTIES));
         heapprops.Type = D3D12_HEAP_TYPE_DEFAULT;
         heapprops.CreationNodeMask = 1;
         heapprops.VisibleNodeMask = 1;
-
-        // Specify resource information
-        D3D12_RESOURCE_DESC dsvDesc = {};
+        D3D12_RESOURCE_DESC dsvDesc;
+        memset(&dsvDesc, 0, sizeof(D3D12_RESOURCE_DESC));
         dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
         dsvDesc.Width = width;
         dsvDesc.Height = height;
@@ -251,64 +290,36 @@ public:
         dsvDesc.SampleDesc.Quality = 0;
         dsvDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
         dsvDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+        device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &dsvDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, __uuidof(ID3D12Resource), (void**)&dsv);
+        device->CreateDepthStencilView(dsv, &depthStencilDesc, dsvHeap->GetCPUDescriptorHandleForHeapStart());
+    }
 
-        // Allocate memory for Resource
-        device->CreateCommittedResource(&heapprops, D3D12_HEAP_FLAG_NONE, &dsvDesc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue, IID_PPV_ARGS(&dsv));
-        // Create DepthStencilView to Resource on descriptor heap
-        device->CreateDepthStencilView(dsv, &depthStencilDesc, dsvHandle);
-
-        // ============================
-        // Viewport & Scissor
-        // ============================
-        
-        // Define viewport and scissor rect
-        viewport.TopLeftX = 0.0f;
-        viewport.TopLeftY = 0.0f;
-        viewport.Width = (float)width;
-        viewport.Height = (float)height;
-        viewport.MinDepth = 0.0f;
-        viewport.MaxDepth = 1.0f;
-        scissorRect.left = 0;
-        scissorRect.top = 0;
-        scissorRect.right = width;
-        scissorRect.bottom = height;
-
-        // ============================
-        // Root Signature
-        // ============================
+    void createRootSignature()
+    {
         std::vector<D3D12_ROOT_PARAMETER> parameters;
-
-        D3D12_ROOT_PARAMETER rootParameterCBVS = {};
+        D3D12_ROOT_PARAMETER rootParameterCBVS;
         rootParameterCBVS.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         rootParameterCBVS.Descriptor.ShaderRegister = 0; // Register(b0)
         rootParameterCBVS.Descriptor.RegisterSpace = 0;
         rootParameterCBVS.ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
         parameters.push_back(rootParameterCBVS);
-
-        D3D12_ROOT_PARAMETER rootParameterCBPS = {};
+        D3D12_ROOT_PARAMETER rootParameterCBPS;
         rootParameterCBPS.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
         rootParameterCBPS.Descriptor.ShaderRegister = 0; // Register(b0)
         rootParameterCBPS.Descriptor.RegisterSpace = 0;
         rootParameterCBPS.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
         parameters.push_back(rootParameterCBPS);
 
-        D3D12_ROOT_SIGNATURE_DESC rsDesc = {};
-        rsDesc.NumParameters = (UINT)parameters.size();
-        rsDesc.pParameters = parameters.data();
-        rsDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-
-        ID3DBlob* serialized = nullptr;
-        ID3DBlob* error = nullptr;
-        D3D12SerializeRootSignature(
-            &rsDesc, D3D_ROOT_SIGNATURE_VERSION_1, &serialized, &error);
-
-        device->CreateRootSignature(
-            0, serialized->GetBufferPointer(), serialized->GetBufferSize(),
-            IID_PPV_ARGS(&rootSignature));
-
+        D3D12_ROOT_SIGNATURE_DESC desc = {};
+        desc.NumParameters = parameters.size();
+        desc.pParameters = &parameters[0];
+        desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        ID3DBlob* serialized;
+        ID3DBlob* error;
+        D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &serialized, &error);
+        device->CreateRootSignature(0, serialized->GetBufferPointer(), serialized->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+        srvTableIndex = 1;
         serialized->Release();
-
     }
 
     // reset command allocator and command list

@@ -347,6 +347,53 @@ public:
 
         return m;
     }
+
+    static Matrix lookAtLH(const Vec3& eye, const Vec3& target, const Vec3& up)
+    {
+        Vec3 zaxis = (target - eye).normalized();          // Forward (+Z)
+        Vec3 xaxis = Vec3::cross(up, zaxis).normalized();  // Right
+        Vec3 yaxis = Vec3::cross(zaxis, xaxis);            // Up
+
+        Matrix m;
+        m.identity();
+
+        m.a[0][0] = xaxis.x;
+        m.a[0][1] = xaxis.y;
+        m.a[0][2] = xaxis.z;
+        m.a[0][3] = -Vec3::dot(xaxis, eye);
+
+        m.a[1][0] = yaxis.x;
+        m.a[1][1] = yaxis.y;
+        m.a[1][2] = yaxis.z;
+        m.a[1][3] = -Vec3::dot(yaxis, eye);
+
+        m.a[2][0] = zaxis.x;
+        m.a[2][1] = zaxis.y;
+        m.a[2][2] = zaxis.z;
+        m.a[2][3] = -Vec3::dot(zaxis, eye);
+
+        m.a[3][3] = 1.0f;
+
+        return m;
+    }
+
+    static Matrix perspectiveLH(float n, float f, float aspect, float fovDeg)
+    {
+        Matrix m;
+        std::memset(m.m, 0, sizeof(float) * 16);
+
+        float fovRad = fovDeg * 3.141592654f / 180.0f;
+        float t = 1.0f / std::tanf(fovRad * 0.5f);
+
+        m.a[0][0] = t / aspect;
+        m.a[1][1] = t;
+        m.a[2][2] = f / (f - n);
+        m.a[2][3] = (-f * n) / (f - n);
+        m.a[3][2] = 1.0f;
+        m.a[3][3] = 0.0f;
+
+        return m;
+    }
 };
 
 // -----------------------------------------------------------------------------
