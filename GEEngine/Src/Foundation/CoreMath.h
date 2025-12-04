@@ -299,31 +299,44 @@ public:
 
     static Matrix rotationZ(float angle) {
         float c = std::cos(angle), s = std::sin(angle);
-        Matrix r = Identity();
-        r.m[0] = c;  r.m[1] = -s;
-        r.m[4] = s;  r.m[5] = c;
+        Matrix r;
+        r.m[0] = c;
+        r.m[1] = -s;
+        r.m[4] = s;
+        r.m[5] = c;
         return r;
     }
 
     static Matrix perspective(const float n, const float f, float aspect, const float fov) {
-        Matrix pers;
-        memset(pers.m, 0, sizeof(float) * 16);
+        Matrix m;
+        float fovRad = fov * 3.141592654f / 180.0f;
+        float t = 1.0f / std::tanf(fovRad * 0.5);
 
-        float t = 1.0f / (tanf(fov * 0.5f * 3.141592654f / 180.0f));
+        m.a[0][0] = t / aspect;
+        m.a[1][1] = t;
+        m.a[2][2] = f / (n - f);
+        m.a[2][3] = (f * n) / (n - f);
+        m.a[3][2] = -1.0f;
+        return m;
+    }
 
-        pers.a[0][0] = t / aspect;
-        pers.a[1][1] = t;
+    static Matrix perspectiveLH(const float n, const float f, float aspect, const float fov) {
+     
+        Matrix m;
 
-        pers.a[2][2] = f / (n - f);
-        pers.a[2][3] = (f * n) / (n - f);
+        float fovRad = fov * 3.141592654f / 180.0f;
+        float t = 1.0f / std::tanf(fovRad * 0.5f);
 
-        pers.a[3][2] = -1.0f;
-
-        return pers;
+        m.a[0][0] = t / aspect;
+        m.a[1][1] = t;
+        m.a[2][2] = f / (f - n);
+        m.a[2][3] = (-f * n) / (f - n);
+        m.a[3][2] = 1.0f;
+        return m;
     }
 
     static Matrix lookAt(const Vec3& from, const Vec3& to, const Vec3& up) {
-        Vec3 zaxis = (to-from).normalized();
+        Vec3 zaxis = (from - to).normalized();
         Vec3 xaxis = Vec3::cross(up, zaxis).normalized();
         Vec3 yaxis = Vec3::cross(zaxis, xaxis);
 
@@ -332,65 +345,40 @@ public:
         m.a[0][0] = xaxis.x;
         m.a[0][1] = xaxis.y;
         m.a[0][2] = xaxis.z;
+        m.a[0][3] = -Vec3::dot(xaxis, from);
         m.a[1][0] = yaxis.x;
         m.a[1][1] = yaxis.y;
         m.a[1][2] = yaxis.z;
+        m.a[1][3] = -Vec3::dot(yaxis, from);
         m.a[2][0] = zaxis.x;
         m.a[2][1] = zaxis.y;
         m.a[2][2] = zaxis.z;
-
-        m.a[0][3] = -Vec3::dot(xaxis, from);
-        m.a[1][3] = -Vec3::dot(yaxis, from);
         m.a[2][3] = -Vec3::dot(zaxis, from);
-
         m.a[3][3] = 1.0f;
-
         return m;
     }
 
-    static Matrix lookAtLH(const Vec3& eye, const Vec3& target, const Vec3& up)
+    static Matrix lookAtLH(const Vec3& from, const Vec3& to, const Vec3& up)
     {
-        Vec3 zaxis = (target - eye).normalized();          // Forward (+Z)
-        Vec3 xaxis = Vec3::cross(up, zaxis).normalized();  // Right
-        Vec3 yaxis = Vec3::cross(zaxis, xaxis);            // Up
+        Vec3 zaxis = (to - from).normalized(); 
+        Vec3 xaxis = Vec3::cross(up, zaxis).normalized();
+        Vec3 yaxis = Vec3::cross(zaxis, xaxis);
 
         Matrix m;
-        m.identity();
 
         m.a[0][0] = xaxis.x;
         m.a[0][1] = xaxis.y;
         m.a[0][2] = xaxis.z;
-        m.a[0][3] = -Vec3::dot(xaxis, eye);
-
+        m.a[0][3] = -Vec3::dot(xaxis, from);
         m.a[1][0] = yaxis.x;
         m.a[1][1] = yaxis.y;
         m.a[1][2] = yaxis.z;
-        m.a[1][3] = -Vec3::dot(yaxis, eye);
-
+        m.a[1][3] = -Vec3::dot(yaxis, from);
         m.a[2][0] = zaxis.x;
         m.a[2][1] = zaxis.y;
         m.a[2][2] = zaxis.z;
-        m.a[2][3] = -Vec3::dot(zaxis, eye);
-
+        m.a[2][3] = -Vec3::dot(zaxis, from);
         m.a[3][3] = 1.0f;
-
-        return m;
-    }
-
-    static Matrix perspectiveLH(float n, float f, float aspect, float fovDeg)
-    {
-        Matrix m;
-        std::memset(m.m, 0, sizeof(float) * 16);
-
-        float fovRad = fovDeg * 3.141592654f / 180.0f;
-        float t = 1.0f / std::tanf(fovRad * 0.5f);
-
-        m.a[0][0] = t / aspect;
-        m.a[1][1] = t;
-        m.a[2][2] = f / (f - n);
-        m.a[2][3] = (-f * n) / (f - n);
-        m.a[3][2] = 1.0f;
-        m.a[3][3] = 0.0f;
 
         return m;
     }

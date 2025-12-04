@@ -5,6 +5,8 @@
 #include "Src/Foundation/PSOManager.h"
 #include "Src/Foundation/Plane.h"
 #include "Src/Foundation/Timer.h"
+#include <iostream>
+#include "Src/Foundation/ScreenSpaceTriangle.h"
 //#include "Src/Foundation/ScreenSpaceTriangle.h"
 //#include "Src/Foundation/Plane.h"
 
@@ -22,34 +24,37 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     Timer timer;
     float t = 0;
 
-    Plane plane;
-    plane.init(&core, &psoManager, &shaderManager);
-
-    while (true) {
+	// polygon
+	ScreenSpaceTriangle triangle;
+	triangle.init(&core, &psoManager, &shaderManager);
+	Plane plane;
+	plane.init(&core, &psoManager, &shaderManager);
+	int option = 1;
+	// render
+	while (true) {
 		core.beginFrame();
 		float dt = timer.dt();
 		win.processMessages();
-		if (win.keys[VK_ESCAPE] == 1)
-		{
+		if (win.keys[VK_ESCAPE] == 1) break;
+		t += dt;
+
+		switch (option) {
+		case 1: {
+			core.beginRenderPass();
+			triangle.draw(&core, &psoManager, &shaderManager, t);
 			break;
 		}
-
-		t += dt;
-		Matrix vp;
-		Matrix p = Matrix::perspectiveLH(0.01f, 10000.0f, 1024.0f / 1024.0f, 60.0f);
-		Vec3 from = Vec3(11 * cos(t), 5, 11 * sinf(t));
-		Matrix v = Matrix::lookAtLH(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
-		vp = (p * v);
-
-		shaderManager.updateConstantVS("StaticModelUntextured", "staticMeshBuffer", "VP", &vp);
-		
-		core.beginRenderPass();
-
-		plane.draw(&core, &psoManager, &shaderManager);
-
+		case 2: {
+			core.beginRenderPass();
+			plane.draw(&core, &psoManager, &shaderManager, t);
+			break;
+		}
+		default:
+			break;
+		}
 		core.finishFrame();
-    }
 
+	}
     core.flushGraphicsQueue();
     return 0;
 }

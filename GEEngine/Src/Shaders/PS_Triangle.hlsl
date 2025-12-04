@@ -1,7 +1,7 @@
 cbuffer bufferName : register(b0)
 {
     float time;
-    float4 lights[4];
+    float2 lights[4];
 };
 
 float dist(float2 screenspace_pos, float2 light)

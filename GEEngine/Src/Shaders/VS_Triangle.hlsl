@@ -3,6 +3,7 @@ struct VS_INPUT
     float4 Pos : POSITION;
     float3 Colour : COLOUR;
 };
+
 struct PS_INPUT
 {
     float4 Pos : SV_POSITION;
