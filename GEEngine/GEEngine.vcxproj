@@ -133,9 +133,10 @@
     <ClInclude Include="Src\Foundation\Core.h" />
     <ClInclude Include="Src\Foundation\CoreMath.h" />
     <ClInclude Include="Src\Foundation\Mesh.h" />
-    <ClInclude Include="Src\Foundation\Plane.h" />
+    <ClInclude Include="Src\Polygon\Cube.h" />
+    <ClInclude Include="Src\Polygon\Plane.h" />
     <ClInclude Include="Src\Foundation\PSOManager.h" />
-    <ClInclude Include="Src\Foundation\ScreenSpaceTriangle.h" />
+    <ClInclude Include="Src\Polygon\ScreenSpaceTriangle.h" />
     <ClInclude Include="Src\Foundation\ShaderManager.h" />
     <ClInclude Include="Src\Foundation\Window.h" />
   </ItemGroup>

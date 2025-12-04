@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <algorithm>
 
-// -----------------------------------------------------------------------------
-// Utilities
-// -----------------------------------------------------------------------------
+#define WINDOW_WIDTH 1000
+#define WINDOW_HEIGHT 1000
+#define M_PI 3.141592654f
 #define SQ(x) ((x) * (x))
 
 template<typename T>
@@ -14,9 +14,6 @@ static T lerp(const T& a, const T& b, float t) {
     return a * (1.0f - t) + b * t;
 }
 
-// -----------------------------------------------------------------------------
-// Vec3
-// -----------------------------------------------------------------------------
 class Vec3 {
 public:
     union {
@@ -148,9 +145,6 @@ public:
     }
 };
 
-// -----------------------------------------------------------------------------
-// Vec4
-// -----------------------------------------------------------------------------
 class Vec4 {
 public:
     union {
@@ -182,9 +176,6 @@ public:
     }
 };
 
-// -----------------------------------------------------------------------------
-// Matrix (4x4 row-major)
-// -----------------------------------------------------------------------------
 class Matrix {
 public:
     union {
@@ -309,7 +300,7 @@ public:
 
     static Matrix perspective(const float n, const float f, float aspect, const float fov) {
         Matrix m;
-        float fovRad = fov * 3.141592654f / 180.0f;
+        float fovRad = fov * M_PI / 180.0f;
         float t = 1.0f / std::tanf(fovRad * 0.5);
 
         m.a[0][0] = t / aspect;
@@ -324,7 +315,7 @@ public:
      
         Matrix m;
 
-        float fovRad = fov * 3.141592654f / 180.0f;
+        float fovRad = fov * M_PI / 180.0f;
         float t = 1.0f / std::tanf(fovRad * 0.5f);
 
         m.a[0][0] = t / aspect;

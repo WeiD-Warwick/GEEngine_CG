@@ -1,20 +1,11 @@
 #pragma once
-#define _USE_MATH_DEFINES
-#include <cmath>
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
-
-#include "Mesh.h"
-#include "Core.h"
-#include "CoreMath.h"
-#include "PSOManager.h"
-#include <cassert>
-#include <iostream>
-#include "ConstantBuffer.h"
-#include "Timer.h"
-#include "ShaderManager.h"
+#include "../Foundation/Mesh.h"
+#include "../Foundation/Core.h"
+#include "../Foundation/CoreMath.h"
+#include "../Foundation/PSOManager.h"
+#include "../Foundation/ConstantBuffer.h"
+#include "../Foundation/Timer.h"
+#include "../Foundation/ShaderManager.h"
 
 struct PRIM_VERTEX {
 public:
@@ -31,11 +22,11 @@ public:
 
         // Primitive
         PRIM_VERTEX vertices[3];
-        vertices[0].position = Vec3(0, 0.5f, 0);
+        vertices[0].position = Vec3(0, 1.0f, 0);
         vertices[0].Colour = Colour(0, 1.0f, 0);
-        vertices[1].position = Vec3(-0.5f, -0.5f, 0);
+        vertices[1].position = Vec3(-1.0f, -1.0f, 0);
         vertices[1].Colour = Colour(1.0f, 0, 0);
-        vertices[2].position = Vec3(0.5f, -0.5f, 0);
+        vertices[2].position = Vec3(1.0f, -1.0f, 0);
         vertices[2].Colour = Colour(0, 0, 1.0f);
 
         unsigned int indices[3] = { 0, 1, 2 };
@@ -67,13 +58,11 @@ public:
     }
 
     void draw(Core* core, PSOManager* psoManager, ShaderManager* shaderManager, float time) {
-        float WIDTH = 1024;
-        float HEIGHT = 1024;
         Vec4 lights[4] = {};
         for (int i = 0; i < 4; i++) {
             float angle = time + (i * M_PI / 2.0f);
-            lights[i] = Vec4(WIDTH / 2.0f + (cosf(angle) * (WIDTH * 0.1f)),
-                             HEIGHT / 2.0f + (sinf(angle) * (HEIGHT * 0.1f)),
+            lights[i] = Vec4(WINDOW_WIDTH / 2.0f + (cosf(angle) * (WINDOW_WIDTH * 0.2f)),
+                             WINDOW_HEIGHT / 2.0f + (sinf(angle) * (WINDOW_HEIGHT * 0.2f)),
                              0, 0);
         }
 

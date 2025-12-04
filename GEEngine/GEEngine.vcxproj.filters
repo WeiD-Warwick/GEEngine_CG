@@ -38,7 +38,7 @@
     <ClInclude Include="Src\Foundation\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Foundation\ScreenSpaceTriangle.h">
+    <ClInclude Include="Src\Polygon\ScreenSpaceTriangle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\Foundation\PSOManager.h">
@@ -50,7 +50,10 @@
     <ClInclude Include="Src\Foundation\ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Foundation\Plane.h">
+    <ClInclude Include="Src\Polygon\Plane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Polygon\Cube.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

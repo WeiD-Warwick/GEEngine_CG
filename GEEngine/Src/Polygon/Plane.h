@@ -1,17 +1,15 @@
 #pragma once
-#include "Mesh.h"
 #include <string>
-#include "PSOManager.h"
-#include "ShaderManager.h"
+#include "../Foundation/Mesh.h"
+#include "../Foundation/PSOManager.h"
+#include "../Foundation/ShaderManager.h"
 
 class Plane {
-
 public:
 	Mesh mesh;
 	std::string shaderName;
 
-	void init(Core* core, PSOManager* psoManager, ShaderManager* shaderManager)
-	{
+	void init(Core* core, PSOManager* psoManager, ShaderManager* shaderManager) {
 		std::vector<STATIC_VERTEX> vertices;
 		vertices.push_back(addVertex(Vec3(-1, 0, -1), Vec3(0, 1, 0), 0, 0));
 		vertices.push_back(addVertex(Vec3(1, 0, -1), Vec3(0, 1, 0), 1, 0));

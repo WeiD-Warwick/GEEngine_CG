@@ -1,23 +1,21 @@
-#include "Src/Foundation/Window.h"
 #include <string>
+#include "Src/Foundation/Window.h"
 #include "Src/Foundation/Core.h"
 #include "Src/Foundation/ShaderManager.h"
 #include "Src/Foundation/PSOManager.h"
-#include "Src/Foundation/Plane.h"
 #include "Src/Foundation/Timer.h"
-#include <iostream>
-#include "Src/Foundation/ScreenSpaceTriangle.h"
-//#include "Src/Foundation/ScreenSpaceTriangle.h"
-//#include "Src/Foundation/Plane.h"
+
+#include "Src/Polygon/Plane.h"
+#include "Src/Polygon/ScreenSpaceTriangle.h"
+#include "Src/Polygon/Cube.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    int width = 1024, height = 1024;
 
     Window win;
-    win.create(0, 0, width, height, "My Window");
+    win.create(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, "My Window");
 
     Core core;
-    core.init(win.hwnd, width, height);
+    core.init(win.hwnd, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     ShaderManager shaderManager;
     PSOManager psoManager;
@@ -29,7 +27,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	triangle.init(&core, &psoManager, &shaderManager);
 	Plane plane;
 	plane.init(&core, &psoManager, &shaderManager);
-	int option = 1;
+	Cube cube;
+	cube.init(&core, &psoManager, &shaderManager);
+	int option = 3;
 	// render
 	while (true) {
 		core.beginFrame();
@@ -47,6 +47,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		case 2: {
 			core.beginRenderPass();
 			plane.draw(&core, &psoManager, &shaderManager, t);
+			break;
+		}
+		case 3: {
+			core.beginRenderPass();
+			cube.draw(&core, &psoManager, &shaderManager, t);
 			break;
 		}
 		default:

@@ -22,7 +22,7 @@ public:
 	~Window() {}
 
 	void create(int window_x = 0, int window_y = 0,
-				int window_width = 800, int window_height = 600,
+				int window_width = 1920, int window_height = 1080,
 				const std::string& window_name = "",
 				WNDPROC wndProc = nullptr);
 
