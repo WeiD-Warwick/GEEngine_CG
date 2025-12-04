@@ -22,26 +22,19 @@ public:
     Colour Colour;
 };
 
-struct alignas(16) ConstantBufferCPU {
-public:
-    float time;
-    float padding[3];
-    Vec4 lights[4];
-};
-
 class ScreenSpaceTriangle {
-    Mesh m;
+    Mesh mesh;
 
     ID3DBlob* vertexShader = nullptr;
     ID3DBlob* pixelShader = nullptr;
     ID3D12RootSignature* rootSignature = nullptr;
     PSOManager psos;
 
-    // Constant Buffer
-    ConstantBuffer constantBuffer;
-    ConstantBufferCPU constBufferCPU{};
+    ShaderManager shaders;
 
     Timer timer;
+    float timeValue = 0;
+    Vec4 lights[4];
 public:
     ScreenSpaceTriangle(Core* core) {
 
@@ -55,11 +48,13 @@ public:
         vertices[2].Colour = Colour(0, 0, 1.0f);
 
         unsigned int indices[3] = { 0, 1, 2 };
-        m.init(core, &vertices[0], sizeof(PRIM_VERTEX), 3, indices, 3);
+        mesh.init(core, &vertices[0], sizeof(PRIM_VERTEX), 3, indices, 3);
 
-        // Compile shaders
-        vertexShader = ShaderManager::loadAndCompile("Src/Shaders/VS_Triangle.hlsl", "VS", "vs_5_0");
-        pixelShader = ShaderManager::loadAndCompile("Src/Shaders/PS_Triangle.hlsl", "PS", "ps_5_0");
+        // init shaders and constant buffers
+        std::string shaderName = "TriangleShader";
+        std::string vsPath = "Src/Shaders/VS_Triangle.hlsl";
+        std::string psPath = "Src/Shaders/PS_Triangle.hlsl";
+        shaders.loadShader(core, shaderName, vsPath, psPath);
 
         // Layout
         D3D12_INPUT_ELEMENT_DESC inputLayout[2];
@@ -72,35 +67,31 @@ public:
         inputLayoutDesc.NumElements = 2;
         inputLayoutDesc.pInputElementDescs = inputLayout;
 
-        // Constant buffer
-        constBufferCPU.time = 0.0f;
-        constantBuffer.init(core, sizeof(ConstantBufferCPU), 2);
-
         // PSO
-        psos.createPSO(core, "Triangle", vertexShader, pixelShader, inputLayoutDesc);
+        vertexShader = shaders.find(shaderName)->vs;
+        pixelShader = shaders.find(shaderName)->ps;
+        psos.createPSO(core, "TrianglePSO", vertexShader, pixelShader, inputLayoutDesc);
 
     }
 
     void draw(Core* core) {
-        float dt = timer.dt();
-        constBufferCPU.time += dt;
+        timeValue += timer.dt();
 
         int WIDTH = core->_width;
         int HEIGHT = core->_height;
 
         for (int i = 0; i < 4; i++)
         {
-            float angle = constBufferCPU.time + (i * float(M_PI) / 2.0f);
+            float angle = timeValue + (i * float(M_PI) / 2.0f);
             float x = WIDTH / 2.0f + (cosf(angle) * (WIDTH * 0.3f));
             float y = HEIGHT / 2.0f + (sinf(angle) * (HEIGHT * 0.3f));
-            constBufferCPU.lights[i] = Vec4(x, y, 0.0f, 0.0f);
+            lights[i] = Vec4(x, y, 0.0f, 0.0f);
         }
 
-        core->beginRenderPass();
-        constantBuffer.update(&constBufferCPU, sizeof(ConstantBufferCPU), core->frameIndex());
-        core->getCommandList()
-            ->SetGraphicsRootConstantBufferView(1, constantBuffer.getGPUAddress(core->frameIndex()));
-        psos.bind(core, "Triangle");
-        m.draw(core);
+        shaders.updateConstantPS("TriangleShader", "bufferName", "time", &timeValue);
+        shaders.updateConstantPS("TriangleShader", "bufferName", "lights", &lights);
+        shaders.apply(core, "TriangleShader");
+        psos.bind(core, "TriangleShaderPSO");
+        mesh.draw(core);
     }
 };

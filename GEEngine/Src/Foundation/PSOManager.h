@@ -11,8 +11,7 @@ private:
 public:
 
 	void createPSO(Core* core, std::string name, ID3DBlob* vs, ID3DBlob* ps, D3D12_INPUT_LAYOUT_DESC layout) {
-		if (psos.find(name) != psos.end())
-		{
+		if (psos.find(name) != psos.end()) {
 			return;
 		}
 
@@ -79,6 +78,12 @@ public:
 
 	void bind(Core* core, std::string name) {
 		core->getCommandList()->SetPipelineState(psos[name]);
+	}
+
+	~PSOManager() {
+		for (auto& pso : psos) {
+			pso.second->Release();
+		}
 	}
 
 };
