@@ -37,9 +37,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	while (true) {
 		core.beginFrame();
 		float dt = timer.dt();
+		t += dt;
+
 		win.processMessages();
 		if (win.keys[VK_ESCAPE] == 1) break;
-		t += dt;
+		if (win.keys['1'] == 1) option = 1;
+		if (win.keys['2'] == 1) option = 2;
+		if (win.keys['3'] == 1) option = 3;
+		if (win.keys['4'] == 1) option = 4;
+		if (win.keys['5'] == 1) option = 5;
+		
 
 		switch (option) {
 		case 1: {
