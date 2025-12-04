@@ -189,8 +189,7 @@ public:
     {
         return &shaders[name];
     }
-    void apply(Core* core, std::string name)
-    {
+    void apply(Core* core, std::string name) {
         shaders[name].apply(core);
     }
 

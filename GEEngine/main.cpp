@@ -32,7 +32,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	cube.init(&core, &psoManager, &shaderManager);
 	Sphere sphere;
 	sphere.init(&core, &psoManager, &shaderManager, 100, 100, 10);
-	int option = 4;
+	int option = 5;
 	// render
 	while (true) {
 		core.beginFrame();
@@ -54,12 +54,21 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 		case 3: {
 			core.beginRenderPass();
-			cube.draw(&core, &psoManager, &shaderManager, t);
+			Matrix W;
+			cube.draw(&core, &psoManager, &shaderManager, t, W);
 			break;
 		}
 		case 4: {
 			core.beginRenderPass();
 			sphere.draw(&core, &psoManager, &shaderManager, t);
+			break;
+		}
+		case 5: {
+			core.beginRenderPass();
+			Matrix W;
+			cube.draw(&core, &psoManager, &shaderManager, t, W);
+			W = Matrix::translation(5.0f, 0, 0);
+			cube.draw(&core, &psoManager, &shaderManager, t, W);
 			break;
 		}
 		default:
