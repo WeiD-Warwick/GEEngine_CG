@@ -18,10 +18,10 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Foundation\Window.cpp">
+    <ClCompile Include="Src\Foundation\Timer.h">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Foundation\Timer.h">
+    <ClCompile Include="Src\Foundation\Window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -30,9 +30,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\Foundation\Core.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Foundation\Barrier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\Foundation\CoreMath.h">
@@ -48,9 +45,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\Foundation\ConstantBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Foundation\VertexLayoutCache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Src\Foundation\ShaderManager.h">

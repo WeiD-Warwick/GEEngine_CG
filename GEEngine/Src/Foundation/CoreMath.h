@@ -322,13 +322,12 @@ public:
         return pers;
     }
 
-    static Matrix lookAt(const Vec3& eye, const Vec3& target, const Vec3& up) {
-        Vec3 zaxis = (eye - target).normalized();
+    static Matrix lookAt(const Vec3& from, const Vec3& to, const Vec3& up) {
+        Vec3 zaxis = (to-from).normalized();
         Vec3 xaxis = Vec3::cross(up, zaxis).normalized();
         Vec3 yaxis = Vec3::cross(zaxis, xaxis);
 
         Matrix m;
-        memset(m.m, 0, sizeof(float) * 16);
 
         m.a[0][0] = xaxis.x;
         m.a[0][1] = xaxis.y;
@@ -340,9 +339,9 @@ public:
         m.a[2][1] = zaxis.y;
         m.a[2][2] = zaxis.z;
 
-        m.a[0][3] = -Vec3::dot(xaxis, eye);
-        m.a[1][3] = -Vec3::dot(yaxis, eye);
-        m.a[2][3] = -Vec3::dot(zaxis, eye);
+        m.a[0][3] = -Vec3::dot(xaxis, from);
+        m.a[1][3] = -Vec3::dot(yaxis, from);
+        m.a[2][3] = -Vec3::dot(zaxis, from);
 
         m.a[3][3] = 1.0f;
 

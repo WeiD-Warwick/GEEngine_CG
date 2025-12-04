@@ -3,10 +3,23 @@
 #include <dxgi1_4.h>
 #include <d3dcompiler.h>
 #include <vector>
-#include "Barrier.h"
 #pragma comment(lib, "d3d12")
 #pragma comment(lib, "dxgi")
 #pragma comment(lib, "d3dcompiler.lib")
+
+class Barrier {
+public:
+    static void add(ID3D12Resource* res, D3D12_RESOURCE_STATES first, D3D12_RESOURCE_STATES second,
+        ID3D12GraphicsCommandList4* commandList) {
+        D3D12_RESOURCE_BARRIER rb = {};
+        rb.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        rb.Transition.pResource = res;
+        rb.Transition.StateBefore = first;
+        rb.Transition.StateAfter = second;
+        rb.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        commandList->ResourceBarrier(1, &rb);
+    }
+};
 
 class GPUFence {
 public:

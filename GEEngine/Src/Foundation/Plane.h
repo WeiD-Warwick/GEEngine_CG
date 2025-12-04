@@ -1,5 +1,4 @@
 #pragma once
-#include "VertexLayoutCache.h"
 #include "Mesh.h"
 #include <string>
 #include "PSOManager.h"
@@ -27,7 +26,7 @@ public:
 		indices.push_back(2);
 		mesh.init(core, vertices, indices);
 
-		std::string shaderName = "StaticModelUntextured";
+		shaderName = "StaticModelUntextured";
 		std::string vsPath = "Src/Shaders/VS.hlsl";
 		std::string psPath = "Src/Shaders/PS.hlsl";
 

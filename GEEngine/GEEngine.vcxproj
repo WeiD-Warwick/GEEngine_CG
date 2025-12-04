@@ -129,7 +129,6 @@
     <ClCompile Include="Src\Foundation\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Src\Foundation\Barrier.h" />
     <ClInclude Include="Src\Foundation\ConstantBuffer.h" />
     <ClInclude Include="Src\Foundation\Core.h" />
     <ClInclude Include="Src\Foundation\CoreMath.h" />
@@ -138,7 +137,6 @@
     <ClInclude Include="Src\Foundation\PSOManager.h" />
     <ClInclude Include="Src\Foundation\ScreenSpaceTriangle.h" />
     <ClInclude Include="Src\Foundation\ShaderManager.h" />
-    <ClInclude Include="Src\Foundation\VertexLayoutCache.h" />
     <ClInclude Include="Src\Foundation\Window.h" />
   </ItemGroup>
   <ItemGroup>

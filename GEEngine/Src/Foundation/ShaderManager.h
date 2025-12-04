@@ -18,7 +18,6 @@ public:
     std::vector<ConstantBuffer> psConstantBuffers;
     std::vector<ConstantBuffer> vsConstantBuffers;
     std::map<std::string, int> textureBindPoints;
-    int hasLayout;
 
     void load(Core* core, std::string& vsPath, std::string& psPath) {
         loadBuffer(core, vsPath, ShaderType::VERTEX);
@@ -38,6 +37,7 @@ public:
             constantBuffer->GetDesc(&cbDesc);
             buffer.name = cbDesc.Name;
             unsigned int totalSize = 0;
+
             for (int n = 0; n < cbDesc.Variables; n++) {
                 ID3D12ShaderReflectionVariable* var = constantBuffer->GetVariableByIndex(n);
                 D3D12_SHADER_VARIABLE_DESC vDesc;
@@ -48,9 +48,11 @@ public:
                 buffer.constantBufferData.insert({ vDesc.Name, bufferVariable });
                 totalSize += bufferVariable.size;
             }
+
             buffer.init(core, totalSize);
             buffers.push_back(buffer);
         }
+
         for (int i = 0; i < desc.BoundResources; i++) {
             D3D12_SHADER_INPUT_BIND_DESC bindDesc;
             reflection->GetResourceBindingDesc(i, &bindDesc);
@@ -126,7 +128,8 @@ private:
         ID3DBlob* status;
 
         HRESULT hr = D3DCompile(
-            src.c_str(), strlen(src.c_str()),
+            src.c_str(),
+            strlen(src.c_str()),
             NULL, NULL, NULL,
             entry, profile,
             0, 0,
