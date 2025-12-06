@@ -38,10 +38,10 @@ public:
 			meshes.push_back(mesh);
 		}
 
+		// load globalInverse
 		memcpy(&animation.skeleton.globalInverse, &gemanimation.globalInverse, 16 * sizeof(float));
 
 		// load bones
-		std::cout << gemanimation.bones.size() << std::endl;
 		for (int i = 0; i < gemanimation.bones.size(); i++) {
 			Bone bone;
 			bone.name = gemanimation.bones[i].name;
@@ -55,11 +55,9 @@ public:
 			std::string name = gemanimation.animations[i].name;
 			AnimationSequence aseq;
 			aseq.ticksPerSecond = gemanimation.animations[i].ticksPerSecond;
-			for (int n = 0; n < gemanimation.animations[i].frames.size(); n++)
-			{
+			for (int n = 0; n < gemanimation.animations[i].frames.size(); n++) {
 				AnimationFrame frame;
-				for (int index = 0; index < gemanimation.animations[i].frames[n].positions.size(); index++)
-				{
+				for (int index = 0; index < gemanimation.animations[i].frames[n].positions.size(); index++) {
 					Vec3 p;
 					Quaternion q;
 					Vec3 s;
