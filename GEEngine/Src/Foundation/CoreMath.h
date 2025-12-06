@@ -250,19 +250,19 @@ public:
     }
 
     // Transformations
-    static Matrix translation(float x, float y, float z) {
+    static Matrix translation(const Vec3& v) {
         Matrix r = Identity();
-        r.m[3] = x;
-        r.m[7] = y;
-        r.m[11] = z;
+        r.m[3] = v.x;
+        r.m[7] = v.y;
+        r.m[11] = v.z;
         return r;
     }
 
-    static Matrix scaling(float sx, float sy, float sz) {
+    static Matrix scaling(const Vec3& v) {
         Matrix r = Identity();
-        r.m[0] = sx;
-        r.m[5] = sy;
-        r.m[10] = sz;
+        r.m[0] = v.x;
+        r.m[5] = v.y;
+        r.m[10] = v.z;
         return r;
     }
 
@@ -386,7 +386,7 @@ public:
         M.identity();
     }
 
-    static ShadingFrame FromNormal(const Vec3& normal) {
+    static ShadingFrame fromNormal(const Vec3& normal) {
         ShadingFrame f;
 
         Vec3 z = normal.normalized();
@@ -458,14 +458,14 @@ public:
         );
     }
 
-    static Quaternion FromAxisAngle(const Vec3& axis, float angle) {
+    static Quaternion fromAxisAngle(const Vec3& axis, float angle) {
         Vec3 n = axis.normalized();
         float half = angle * 0.5f;
         float s = std::sin(half);
         return Quaternion(std::cos(half), n.x * s, n.y * s, n.z * s);
     }
 
-    static Quaternion Slerp(const Quaternion& q1, const Quaternion& q2, float t) {
+    static Quaternion slerp(const Quaternion& q1, const Quaternion& q2, float t) {
         Quaternion b = q2;
         float dot = q1.w * b.w + q1.x * b.x + q1.y * b.y + q1.z * b.z;
 

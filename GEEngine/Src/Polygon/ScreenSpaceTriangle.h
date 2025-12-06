@@ -6,6 +6,7 @@
 #include "../Foundation/ConstantBuffer.h"
 #include "../Foundation/Timer.h"
 #include "../Foundation/ShaderManager.h"
+#include "../Foundation/VertexLayoutCache.h"
 
 struct PRIM_VERTEX {
 public:
@@ -22,7 +23,7 @@ public:
 
         // Primitive
         PRIM_VERTEX vertices[3];
-        vertices[0].position = Vec3(0, 1.0f, 0);
+        vertices[0].position = Vec3(0, 0.5f, 0);
         vertices[0].Colour = Colour(0, 1.0f, 0);
         vertices[1].position = Vec3(-1.0f, -1.0f, 0);
         vertices[1].Colour = Colour(1.0f, 0, 0);
@@ -70,6 +71,8 @@ public:
         shaderManager->updateConstantPS(shaderName, "bufferName", "lights", &lights);
 
         shaderManager->apply(core, shaderName);
+
+
         psoManager->bind(core, "TrianglePSO");
         mesh.draw(core);
     }

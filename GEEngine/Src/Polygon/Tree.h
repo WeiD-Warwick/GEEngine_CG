@@ -4,6 +4,7 @@
 #include "../Foundation/PSOManager.h"
 #include "../Foundation/ShaderManager.h"
 #include "../../Third_Party/GEMLoader.h"
+#include "../Foundation/VertexLayoutCache.h"
 
 class Tree {
 	std::vector<Mesh*> meshes;
@@ -41,17 +42,18 @@ public:
 			VertexLayoutCache::getStaticLayout());
 	}
 
-	void draw(Core* core, PSOManager* psos, ShaderManager* shaders, float time, Matrix w) {
+	void draw(Core* core, PSOManager* psoManager, ShaderManager* shaderManager, float time, Matrix w) {
 
 		Matrix vp;
 		Matrix p = Matrix::perspectiveLH(0.01f, 10000.0f, 1024.0f / 1024.0f, 60.0f);
 		Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
 		Matrix v = Matrix::lookAtLH(from, Vec3(0, 0, 0), Vec3(0, 1, 0));
 		vp = p * v;
-		shaders->updateConstantVS(shaderName, "staticMeshBuffer", "VP", &vp);
-		shaders->updateConstantVS(shaderName, "staticMeshBuffer", "W", &w);
-		shaders->apply(core, shaderName);
-		psos->bind(core, "StaticModelUntexturedPSO");
+
+		shaderManager->updateConstantVS(shaderName, "staticMeshBuffer", "VP", &vp);
+		shaderManager->updateConstantVS(shaderName, "staticMeshBuffer", "W", &w);
+		shaderManager->apply(core, shaderName);
+		psoManager->bind(core, "StaticModelUntexturedPSO");
 
 		for (int i = 0; i < meshes.size(); i++) {
 			meshes[i]->draw(core);

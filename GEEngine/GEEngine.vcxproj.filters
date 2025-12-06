@@ -56,11 +56,55 @@
     <ClInclude Include="Src\Polygon\Cube.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Polygon\Sphere.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Polygon\Tree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Third_Party\GEMLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Foundation\Animation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Foundation\VertexLayoutCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Polygon\AnimatedModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Src\Shaders\VS.hlsl" />
     <FxCompile Include="Src\Shaders\PS.hlsl" />
     <FxCompile Include="Src\Shaders\PS_Triangle.hlsl" />
     <FxCompile Include="Src\Shaders\VS_Triangle.hlsl" />
+    <FxCompile Include="Src\Shaders\PS_Animation.hlsl" />
+    <FxCompile Include="Src\Shaders\VS_Animation.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_alb.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_nh.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_rmax.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Src\Assets\Models\Textures\Textures1_ALB.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Src\Assets\Models\Textures\Textures1_NH.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Src\Assets\Models\Textures\Textures1_RMAX.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Src\Assets\Models\acacia_003.gem" />
+    <None Include="Src\Assets\Models\TRex.gem" />
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
 #include "../Foundation/Mesh.h"
 #include "../Foundation/PSOManager.h"
 #include "../Foundation/ShaderManager.h"
+#include "../Foundation/VertexLayoutCache.h"
 
 class Cube {
 	Mesh mesh;

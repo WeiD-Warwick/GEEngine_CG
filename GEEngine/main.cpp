@@ -10,6 +10,7 @@
 #include "Src/Polygon/Cube.h"
 #include "Src/Polygon/Sphere.h"
 #include "Src/Polygon/Tree.h"
+#include "Src/Polygon/AnimatedModel.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 
@@ -37,7 +38,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Tree tree;
 	tree.init(&core, &psoManager, &shaderManager, "Src/Assets/Models/acacia_003.gem");
 
-	int option = 6;
+	AnimatedModel animatedModel;
+	animatedModel.load(&core, &psoManager, &shaderManager, "Src/Assets/Models/TRex.gem");
+
+	int option = 7;
 	// render
 	while (true) {
 		core.beginFrame();
@@ -52,6 +56,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (win.keys['4'] == 1) option = 4;
 		if (win.keys['5'] == 1) option = 5;
 		if (win.keys['6'] == 1) option = 6;
+		if (win.keys['7'] == 1) option = 7;
 
 		switch (option) {
 		case 1: {
@@ -79,7 +84,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			core.beginRenderPass();
 			Matrix W;
 			cube.draw(&core, &psoManager, &shaderManager, t, W);
-			W = Matrix::translation(5.0f, 0, 0);
+			W = Matrix::translation(Vec3(5.0f, 0, 0));
 			cube.draw(&core, &psoManager, &shaderManager, t, W);
 			break;
 		}
@@ -87,8 +92,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		case 6: {
 			core.beginRenderPass();
 			Matrix W;
-			W = Matrix::scaling(0.01f, 0.01f, 0.01f);
+			W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f));
 			tree.draw(&core, &psoManager, &shaderManager, t, W);
+			break;
+		}
+		case 7: {
+			core.beginRenderPass();
+			Matrix W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f));
+			animatedModel.update(dt);
+			animatedModel.draw(&core, &psoManager, &shaderManager, t, W);
 			break;
 		}
 		default:
