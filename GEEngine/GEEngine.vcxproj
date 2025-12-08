@@ -132,7 +132,9 @@
     <ClInclude Include="Src\Foundation\ConstantBuffer.h" />
     <ClInclude Include="Src\Foundation\Core.h" />
     <ClInclude Include="Src\Foundation\CoreMath.h" />
+    <ClInclude Include="Src\Foundation\DescriptorHeap.h" />
     <ClInclude Include="Src\Foundation\Mesh.h" />
+    <ClInclude Include="Src\Foundation\TextureManager.h" />
     <ClInclude Include="Src\Foundation\VertexLayoutCache.h" />
     <ClInclude Include="Src\Foundation\Animation.h" />
     <ClInclude Include="Src\Polygon\Cube.h" />
@@ -145,6 +147,7 @@
     <ClInclude Include="Src\Polygon\Sphere.h" />
     <ClInclude Include="Src\Polygon\Tree.h" />
     <ClInclude Include="Third_Party\GEMLoader.h" />
+    <ClInclude Include="Third_Party\stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Src\Shaders\PS.hlsl">

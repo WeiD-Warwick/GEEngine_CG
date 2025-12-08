@@ -6,6 +6,7 @@
 #include "../../Third_Party/GEMLoader.h"
 #include "../Foundation/VertexLayoutCache.h"
 #include "../Foundation/Animation.h"
+#include "../Foundation/TextureManager.h"
 
 class AnimatedModel {
 	std::vector<Mesh *> meshes;
@@ -16,8 +17,10 @@ class AnimatedModel {
 
 	AnimationInstance instance;
 
+	std::vector<std::string> textureFilenames;
+
 public:
-	void load(Core* core, PSOManager* psoManager, ShaderManager* shaderManager, std::string filename) {
+	void load(Core* core, PSOManager* psoManager, ShaderManager* shaderManager, TextureManager* textureManager, std::string filename) {
 
 		GEMLoader::GEMModelLoader loader;
 		std::vector<GEMLoader::GEMMesh> gemmeshes;
@@ -34,6 +37,10 @@ public:
 				memcpy(&v, &gemmeshes[i].verticesAnimated[j], sizeof(ANIMATED_VERTEX));
 				vertices.push_back(v);
 			}
+			std::string texName = gemmeshes[i].material.find("albedo").getValue();
+			std::string fullPath = "Src/Assets/" + texName;
+			textureManager->loadTexture(core, texName, fullPath);
+			textureFilenames.push_back(texName);
 			mesh->init(core, vertices, gemmeshes[i].indices);
 			meshes.push_back(mesh);
 		}
@@ -96,7 +103,7 @@ public:
 		}
 	}
 
-	void draw(Core* core, PSOManager* psoManager, ShaderManager* shaderManager, float time, Matrix w) {
+	void draw(Core* core, PSOManager* psoManager, ShaderManager* shaderManager, TextureManager* textureManager, float time, Matrix w) {
 		Matrix vp;
 		Matrix p = Matrix::perspectiveLH(0.01f, 10000.0f, 1024.0f / 1024.0f, 60.0f);
 		Vec3 from = Vec3(11 * cos(time), 5, 11 * sinf(time));
@@ -110,6 +117,7 @@ public:
 		psoManager->bind(core, psoName);
 
 		for (int i = 0; i < meshes.size(); i++) {
+			shaderManager->updateTexturePS(core, shaderName, "tex", textureManager->find(textureFilenames[i]));
 			meshes[i]->draw(core);
 		}
 	}

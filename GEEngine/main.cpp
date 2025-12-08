@@ -22,6 +22,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     ShaderManager shaderManager;
     PSOManager psoManager;
+	TextureManager textureManager;
     Timer timer;
     float t = 0;
 
@@ -39,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	tree.init(&core, &psoManager, &shaderManager, "Src/Assets/Models/acacia_003.gem");
 
 	AnimatedModel animatedModel;
-	animatedModel.load(&core, &psoManager, &shaderManager, "Src/Assets/Models/TRex.gem");
+	animatedModel.load(&core, &psoManager, &shaderManager, &textureManager, "Src/Assets/Models/TRex.gem");
 
 	int option = 7;
 	// render
@@ -100,7 +101,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			core.beginRenderPass();
 			Matrix W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f));
 			animatedModel.update(dt);
-			animatedModel.draw(&core, &psoManager, &shaderManager, t, W);
+			animatedModel.draw(&core, &psoManager, &shaderManager, &textureManager, t, W);
 			break;
 		}
 		default:
