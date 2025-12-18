@@ -42,7 +42,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	AnimatedModel animatedModel;
 	animatedModel.load(&core, &psoManager, &shaderManager, &textureManager, "Src/Assets/Models/TRex.gem");
 
-	int option = 7;
+	int option = 6;
 	// render
 	while (true) {
 		core.beginFrame();
@@ -92,9 +92,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		case 6: {
 			core.beginRenderPass();
-			Matrix W;
-			W = Matrix::scaling(Vec3(0.01f, 0.01f, 0.01f));
-			tree.draw(&core, &psoManager, &shaderManager, t, W);
+			tree.draw(&core, &psoManager, &shaderManager, t);
 			break;
 		}
 		case 7: {

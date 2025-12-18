@@ -74,6 +74,15 @@
     <ClInclude Include="Src\Polygon\AnimatedModel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Foundation\DescriptorHeap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Foundation\TextureManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Third_Party\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Src\Shaders\VS.hlsl" />
@@ -82,6 +91,7 @@
     <FxCompile Include="Src\Shaders\VS_Triangle.hlsl" />
     <FxCompile Include="Src\Shaders\PS_Animation.hlsl" />
     <FxCompile Include="Src\Shaders\VS_Animation.hlsl" />
+    <FxCompile Include="Src\Shaders\VS_Instanced.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Src\Assets\Models\Textures\T-rex_Base_Color_alb.png">

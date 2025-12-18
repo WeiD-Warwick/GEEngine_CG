@@ -81,6 +81,10 @@ public:
         core->getCommandList()->DrawIndexedInstanced(numMeshIndices, 1, 0, 0, 0);
     }
 
+    const D3D12_VERTEX_BUFFER_VIEW& getVBV() const { return vbView; }
+    const D3D12_INDEX_BUFFER_VIEW& getIBV() const { return ibView; }
+    UINT getIndexCount() const { return numMeshIndices; }
+
     void cleanUp()
     {
         indexBuffer->Release();
